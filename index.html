@@ -277,7 +277,7 @@ footer p{font-size:.75rem;color:var(--muted2)}
   <div class="status-item"><span class="status-dot"></span>Systems Online</div>
   <div class="status-item">Engine v3.2</div>
   <div class="status-item">15 Formats</div>
-  <div class="status-item">PDF Engine ✓</div>
+  <div class="status-item">3 Modes Active</div>
   <div class="status-item" id="genCount">Generated: 0</div>
   <div class="status-item">Ctrl+Enter to Generate</div>
 </div>
@@ -300,9 +300,9 @@ footer p{font-size:.75rem;color:var(--muted2)}
 <!-- HERO -->
 <section class="hero">
   <div class="scan-line"></div>
-  <div class="hero-badge"><span class="badge-dot"></span>v2.0 — PDF→QR Now Live</div>
+  <div class="hero-badge"><span class="badge-dot"></span>v2.0 — Pro Edition</div>
   <h1><div class="h1-line1">Encode Your</div><div class="h1-line2">Digital Future</div></h1>
-  <p>Generate QR codes from text, URLs, WiFi, vCards, and PDFs. Create professional barcodes in 14 formats. Zero servers — 100% private.</p>
+  <p>Generate QR codes from text, URLs, WiFi, vCards, email and SMS. Create professional barcodes in 14 formats. Zero servers — 100% private.</p>
   <div class="hero-ctas">
     <button class="btn-primary" onclick="document.getElementById('generator').scrollIntoView({behavior:'smooth'})">Start Generating</button>
     <button class="btn-secondary" onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})">Explore Features</button>
@@ -326,7 +326,7 @@ footer p{font-size:.75rem;color:var(--muted2)}
 
   <div class="tabs">
     <button class="tab active" onclick="switchTab('qr',this)">⬡ QR Code</button>
-    <button class="tab" onclick="switchTab('pdf',this)">📄 PDF → QR</button>
+    
     <button class="tab" onclick="switchTab('bc',this)">▮▮▯ Barcode</button>
   </div>
 
@@ -448,74 +448,7 @@ footer p{font-size:.75rem;color:var(--muted2)}
     </div>
   </div>
 
-  <!-- ===== PDF → QR PANEL ===== -->
-  <div class="generator-card pdf-card" id="pdf-panel" style="display:none">
-    <div class="cdeco tl"></div><div class="cdeco tr"></div><div class="cdeco bl"></div><div class="cdeco br"></div>
-    <div class="gen-left">
-
-      <div class="form-group">
-        <label>Upload Your PDF</label>
-        <div id="pdf-drop"
-          style="border:2px dashed rgba(255,77,109,0.5);padding:60px 20px;text-align:center;cursor:pointer;transition:all .3s;background:rgba(255,77,109,0.03);position:relative"
-          onclick="document.getElementById('pdf-file').click()"
-          ondragover="event.preventDefault();this.style.background='rgba(255,77,109,0.1)'"
-          ondragleave="this.style.background='rgba(255,77,109,0.03)'"
-          ondrop="event.preventDefault();this.style.background='rgba(255,77,109,0.03)';handlePDFDrop(event)">
-          <input type="file" id="pdf-file" accept="application/pdf,.pdf" style="display:none" onchange="onPDFPicked(this)">
-          <div id="pdf-icon" style="font-size:3.5rem;margin-bottom:14px">📄</div>
-          <div id="pdf-title" style="font-family:Orbitron,monospace;font-size:.8rem;letter-spacing:2px;text-transform:uppercase;color:var(--accentR);margin-bottom:8px">Click to Upload PDF</div>
-          <div id="pdf-sub" style="font-size:.85rem;color:var(--muted)">or drag &amp; drop — any size</div>
-        </div>
-        <button type="button" onclick="document.getElementById('pdf-file').click()" style="width:100%;margin-top:8px;padding:13px;background:rgba(255,77,109,0.1);border:1px solid rgba(255,77,109,0.4);color:var(--accentR);font-family:Orbitron,monospace;font-size:.65rem;letter-spacing:2px;cursor:pointer;transition:all .3s" onmouseover="this.style.background='rgba(255,77,109,0.2)'" onmouseout="this.style.background='rgba(255,77,109,0.1)'">📂 BROWSE FILES</button>
-      </div>
-
-      <!-- Status shown after file picked -->
-      <div id="pdf-status-box" style="display:none;padding:14px;background:rgba(0,255,163,0.05);border:1px solid rgba(0,255,163,0.25);margin-bottom:18px">
-        <div style="display:flex;justify-content:space-between;margin-bottom:5px">
-          <span style="font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:Orbitron,monospace">File</span>
-          <span id="pdf-s-name" style="font-size:.78rem;color:var(--text)"></span>
-        </div>
-        <div style="display:flex;justify-content:space-between;margin-bottom:12px">
-          <span style="font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:Orbitron,monospace">Size</span>
-          <span id="pdf-s-size" style="font-family:Orbitron,monospace;font-size:.78rem;color:var(--accent3)"></span>
-        </div>
-        <!-- Progress bar -->
-        <div style="height:3px;background:var(--border);margin-bottom:6px">
-          <div id="pdf-bar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--accentR),var(--accent2),var(--accent));transition:width .4s"></div>
-        </div>
-        <div style="display:flex;justify-content:space-between">
-          <span id="pdf-s-status" style="font-family:Orbitron,monospace;font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">Ready</span>
-          <span id="pdf-s-pct" style="font-family:Orbitron,monospace;font-size:.6rem;color:var(--accentR)"></span>
-        </div>
-      </div>
-
-      <!-- QR appearance -->
-      <div class="form-row">
-        <div class="form-group"><label>QR Color</label><input type="color" id="pdf-fg" value="#000000"></div>
-        <div class="form-group"><label>Background</label><input type="color" id="pdf-bg" value="#ffffff"></div>
-      </div>
-      <div class="form-group"><label>QR Size</label>
-        <div class="size-control">
-          <input type="range" id="pdf-size" min="200" max="600" value="300" oninput="document.getElementById('pdf-size-val').textContent=this.value+'px'">
-          <span class="size-val" style="color:var(--accentR)" id="pdf-size-val">300px</span>
-        </div>
-      </div>
-
-      <button class="generate-btn pdf-btn" id="pdf-main-btn" onclick="uploadAndMakeQR()">📄 Upload PDF &amp; Generate QR</button>
-    </div>
-
-    <div class="gen-right">
-      <div class="output-area">
-        <div class="output-placeholder" id="pdf-ph">
-          <svg width="60" height="76" viewBox="0 0 60 76" fill="none" stroke="currentColor" stroke-width="1.5">
-            <rect x="4" y="4" width="44" height="68" rx="3"/>
-            <line x1="13" y1="22" x2="39" y2="22"/>
-            <line x1="13" y1="32" x2="39" y2="32"/>
-            <line x1="13" y1="42" x2="30" y2="42"/>
-          </svg>
-          <p>PDF → QR Preview</p>
-        </div>
-<!-- ===== BARCODE PANEL ===== -->
+  <!-- ===== BARCODE PANEL ===== -->
   <div class="generator-card bc-card" id="bc-panel" style="display:none">
     <div class="cdeco tl"></div><div class="cdeco tr"></div><div class="cdeco bl"></div><div class="cdeco br"></div>
     <div class="gen-left">
@@ -612,7 +545,7 @@ footer p{font-size:.75rem;color:var(--muted2)}
   <div class="section-label">Capabilities</div>
   <h2 class="section-title reveal">Why <span style="color:var(--accent)">CyberNet</span></h2>
   <div class="features-grid reveal">
-    <div class="feature-card"><span class="feature-icon">📄</span><h3>PDF → QR Code</h3><p>Convert any PDF into a scannable QR code. Link to hosted documents or embed small PDFs directly. Perfect for menus, brochures, and manuals.</p></div>
+    
     <div class="feature-card"><span class="feature-icon">📡</span><h3>WiFi QR Codes</h3><p>Let guests connect instantly — generate a QR code from WiFi credentials. Works with WPA, WPA2, WEP, and open networks.</p></div>
     <div class="feature-card"><span class="feature-icon">👤</span><h3>vCard Contacts</h3><p>Share full contact details with a single scan. Generates vCard 3.0 format with name, phone, email, organization, and website.</p></div>
     <div class="feature-card"><span class="feature-icon">🎨</span><h3>Logo Overlay</h3><p>Embed your brand logo inside QR codes. Uses High error correction to guarantee reliable scanning even with logo coverage.</p></div>
@@ -639,7 +572,7 @@ footer p{font-size:.75rem;color:var(--muted2)}
     <div class="section-label">Supported</div>
     <h2 class="section-title reveal">Supported <span style="color:var(--accent)">Formats</span></h2>
     <div class="formats-grid reveal">
-      <div class="format-chip special">PDF → QR</div>
+      
       <div class="format-chip special">WiFi QR</div>
       <div class="format-chip special">vCard QR</div>
       <div class="format-chip special">Email QR</div>
@@ -840,105 +773,6 @@ function generateQR() {
 }
 
 // ==========================================
-// PDF → QR
-// ==========================================
-let _pdfFile = null;
-
-function onPDFPicked(input) {
-  if (input.files && input.files[0]) _setPDF(input.files[0]);
-}
-function handlePDFDrop(e) {
-  const f = e.dataTransfer.files[0];
-  if (f) _setPDF(f);
-}
-function _setPDF(file) {
-  _pdfFile = file;
-  const sz = file.size >= 1048576
-    ? (file.size/1048576).toFixed(2)+' MB'
-    : (file.size/1024).toFixed(1)+' KB';
-  document.getElementById('pdf-icon').textContent  = '✅';
-  document.getElementById('pdf-title').textContent = file.name.length>30 ? file.name.substring(0,28)+'…' : file.name;
-  document.getElementById('pdf-title').style.color = 'var(--accent3)';
-  document.getElementById('pdf-sub').textContent   = sz;
-  document.getElementById('pdf-status-box').style.display = 'block';
-  document.getElementById('pdf-s-name').textContent = file.name.length>26 ? file.name.substring(0,24)+'…' : file.name;
-  document.getElementById('pdf-s-size').textContent = sz;
-  document.getElementById('pdf-s-status').textContent = 'Ready to upload';
-  document.getElementById('pdf-s-pct').textContent = '';
-  document.getElementById('pdf-bar').style.width = '0%';
-  notify('PDF selected — click the button to generate QR', 'var(--accent3)');
-}
-
-function _setProgress(pct, status) {
-  document.getElementById('pdf-bar').style.width = pct+'%';
-  document.getElementById('pdf-s-pct').textContent = pct ? pct+'%' : '';
-  document.getElementById('pdf-s-status').textContent = status;
-}
-
-async function uploadAndMakeQR() {
-  if (!_pdfFile) { notify('Pick a PDF file first', 'var(--accentR)'); return; }
-  const btn = document.getElementById('pdf-main-btn');
-  btn.disabled = true;
-  btn.textContent = '⏳ Uploading…';
-  showLoading('pdf');
-  _setProgress(10, 'Connecting…');
-  try {
-    const fd = new FormData();
-    fd.append('file', _pdfFile);
-    _setProgress(30, 'Uploading…');
-    const res = await fetch('https://file.io/?expires=14d', { method:'POST', body:fd });
-    _setProgress(80, 'Processing…');
-    if (!res.ok) throw new Error('Server error '+res.status);
-    const json = await res.json();
-    if (!json.success || !json.link) throw new Error('No link in response');
-    _setProgress(100, 'Uploaded ✓');
-    _makeQR(json.link);
-    btn.textContent = '✓ Done';
-    btn.style.background = 'rgba(0,255,163,0.12)';
-    btn.style.border = '1px solid var(--accent3)';
-    btn.style.color = 'var(--accent3)';
-    btn.disabled = false;
-  } catch(err) {
-    hideLoading('pdf');
-    _setProgress(0, 'Upload failed');
-    btn.disabled = false;
-    btn.textContent = '↺ Retry';
-    notify('Upload failed: '+err.message, 'var(--accentR)');
-  }
-}
-
-function _makeQR(url) {
-  const size = +document.getElementById('pdf-size').value;
-  const fg   = document.getElementById('pdf-fg').value;
-  const bg   = document.getElementById('pdf-bg').value;
-  setTimeout(() => {
-    const cont = document.getElementById('pdf-output');
-    cont.innerHTML = '';
-    try {
-      new QRCode(cont, { text:url, width:size, height:size, colorDark:fg, colorLight:bg, correctLevel:QRCode.CorrectLevel.L });
-      showOutput('pdf');
-      const n = document.getElementById('pdf-note');
-      if (n) { n.style.display='block'; n.textContent='✓ Scan to open your PDF. Hosted for 14 days.'; }
-      addHistory('PDF→QR', _pdfFile ? _pdfFile.name : url, document.getElementById('pdf-output'));
-      notify('QR Code ready! 🎉', 'var(--accent3)');
-    } catch(e) {
-      hideLoading('pdf');
-      const c = document.getElementById('pdf-output');
-      c.innerHTML = '<div style="padding:24px;text-align:center"><p style="color:var(--accentR)">'+e.message+'</p></div>';
-      c.style.display='block';
-    }
-  }, 200);
-}
-
-// stubs
-function updatePDFMethod(){}
-function handlePDFUpload(){}
-function checkURLLength(){}
-function initPDFUpload(){}
-function generateFromManualURL(){}
-function generatePDFQR(){}
-
-// ==========================================
 // BARCODE
 // ==========================================
 const BC_HINTS = {
@@ -1132,14 +966,12 @@ async function copyImg(type) {
 document.addEventListener('keydown', e => {
   if (e.ctrlKey && e.key === 'Enter') {
     if (activeTab === 'qr') generateQR();
-    else if (activeTab === 'pdf') generatePDFQR();
     else generateBarcode();
   }
 });
 
 // INIT
 updateBCHint();
-initPDFUpload();
 </script>
 </body>
 </html>
