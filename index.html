@@ -4,952 +4,305 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CyberNet — QR & Barcode Generator</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"></script>
 <style>
-  :root {
-    --bg: #030610;
-    --surface: #080f1e;
-    --panel: #0c1528;
-    --border: rgba(0,200,255,0.15);
-    --accent: #00c8ff;
-    --accent2: #7b2fff;
-    --accent3: #00ffa3;
-    --text: #cde8ff;
-    --muted: #4a6a8a;
-    --glow: 0 0 20px rgba(0,200,255,0.4);
-    --glow2: 0 0 30px rgba(123,47,255,0.5);
-  }
-
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  html { scroll-behavior: smooth; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Rajdhani', sans-serif;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  /* ANIMATED GRID BG */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(0,200,255,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0,200,255,0.03) 1px, transparent 1px);
-    background-size: 50px 50px;
-    animation: gridMove 20s linear infinite;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: radial-gradient(ellipse 80% 60% at 50% -20%, rgba(123,47,255,0.12) 0%, transparent 70%),
-                radial-gradient(ellipse 60% 40% at 100% 100%, rgba(0,200,255,0.07) 0%, transparent 70%);
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  @keyframes gridMove {
-    0% { transform: translateY(0); }
-    100% { transform: translateY(50px); }
-  }
-
-  /* NOISE TEXTURE */
-  .noise {
-    position: fixed;
-    inset: 0;
-    opacity: 0.03;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-    pointer-events: none;
-    z-index: 1;
-  }
-
-  /* NAV */
-  nav {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 20px 48px;
-    background: rgba(3,6,16,0.7);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--border);
-    animation: slideDown 0.8s ease forwards;
-  }
-
-  @keyframes slideDown {
-    from { transform: translateY(-100%); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-  }
-
-  .logo {
-    font-family: 'Orbitron', monospace;
-    font-weight: 900;
-    font-size: 1.5rem;
-    letter-spacing: 3px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    position: relative;
-  }
-
-  .logo::after {
-    content: 'TM';
-    font-size: 0.4rem;
-    position: absolute;
-    top: 0; right: -14px;
-    -webkit-text-fill-color: var(--muted);
-    font-weight: 400;
-  }
-
-  .nav-links {
-    display: flex;
-    gap: 32px;
-    list-style: none;
-    font-weight: 500;
-    font-size: 0.85rem;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-  }
-
-  .nav-links a {
-    color: var(--muted);
-    text-decoration: none;
-    transition: color 0.3s;
-    position: relative;
-  }
-
-  .nav-links a::after {
-    content: '';
-    position: absolute;
-    bottom: -4px; left: 0; right: 0;
-    height: 1px;
-    background: var(--accent);
-    transform: scaleX(0);
-    transition: transform 0.3s;
-    transform-origin: left;
-  }
-
-  .nav-links a:hover { color: var(--accent); }
-  .nav-links a:hover::after { transform: scaleX(1); }
-
-  .nav-cta {
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    border: none;
-    color: white;
-    font-family: 'Orbitron', monospace;
-    font-size: 0.7rem;
-    letter-spacing: 2px;
-    padding: 10px 20px;
-    cursor: pointer;
-    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
-    transition: opacity 0.3s, box-shadow 0.3s;
-  }
-
-  .nav-cta:hover { opacity: 0.85; box-shadow: var(--glow); }
-
-  /* HERO */
-  .hero {
-    position: relative;
-    z-index: 2;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 120px 24px 80px;
-  }
-
-  .hero-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    border: 1px solid var(--border);
-    background: rgba(0,200,255,0.05);
-    padding: 6px 16px;
-    font-size: 0.75rem;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin-bottom: 32px;
-    animation: fadeUp 0.8s 0.2s ease both;
-  }
-
-  .badge-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--accent3);
-    animation: pulse 2s infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.5; transform: scale(0.8); }
-  }
-
-  .hero h1 {
-    font-family: 'Orbitron', monospace;
-    font-weight: 900;
-    font-size: clamp(2.8rem, 7vw, 6rem);
-    line-height: 1.05;
-    letter-spacing: -1px;
-    margin-bottom: 24px;
-    animation: fadeUp 0.8s 0.4s ease both;
-  }
-
-  .h1-line1 { color: var(--text); }
-  .h1-line2 {
-    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 50%, var(--accent3) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    background-size: 200% 100%;
-    animation: fadeUp 0.8s 0.4s ease both, gradientShift 4s ease infinite;
-  }
-
-  @keyframes gradientShift {
-    0%, 100% { background-position: 0% 0%; }
-    50% { background-position: 100% 0%; }
-  }
-
-  .hero p {
-    font-size: 1.15rem;
-    color: var(--muted);
-    max-width: 600px;
-    line-height: 1.7;
-    font-weight: 400;
-    margin-bottom: 48px;
-    animation: fadeUp 0.8s 0.6s ease both;
-  }
-
-  .hero-ctas {
-    display: flex;
-    gap: 16px;
-    animation: fadeUp 0.8s 0.8s ease both;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  .btn-primary {
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    border: none;
-    color: white;
-    font-family: 'Orbitron', monospace;
-    font-size: 0.75rem;
-    letter-spacing: 2px;
-    padding: 16px 36px;
-    cursor: pointer;
-    clip-path: polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%);
-    transition: box-shadow 0.3s, transform 0.3s;
-    text-transform: uppercase;
-  }
-
-  .btn-primary:hover {
-    box-shadow: 0 0 40px rgba(0,200,255,0.5), 0 0 80px rgba(123,47,255,0.3);
-    transform: translateY(-2px);
-  }
-
-  .btn-secondary {
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--text);
-    font-family: 'Orbitron', monospace;
-    font-size: 0.75rem;
-    letter-spacing: 2px;
-    padding: 16px 36px;
-    cursor: pointer;
-    clip-path: polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%);
-    transition: border-color 0.3s, color 0.3s;
-    text-transform: uppercase;
-  }
-
-  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
-
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(30px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  /* SCAN LINES */
-  .scan-line {
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, var(--accent), transparent);
-    animation: scanDown 4s linear infinite;
-    opacity: 0.4;
-  }
-
-  @keyframes scanDown {
-    0% { top: 0; }
-    100% { top: 100%; }
-  }
-
-  /* STATS ROW */
-  .stats {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    justify-content: center;
-    gap: 1px;
-    background: var(--border);
-    margin: 0 0 80px;
-    animation: fadeUp 0.8s 1s ease both;
-    flex-wrap: wrap;
-  }
-
-  .stat-item {
-    background: var(--surface);
-    padding: 28px 56px;
-    text-align: center;
-    flex: 1;
-    min-width: 160px;
-  }
-
-  .stat-num {
-    font-family: 'Orbitron', monospace;
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--accent);
-    display: block;
-  }
-
-  .stat-label {
-    font-size: 0.75rem;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-top: 4px;
-    display: block;
-  }
-
-  /* SECTION LABEL */
-  .section-label {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 0.7rem;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin-bottom: 16px;
-  }
-
-  .section-label::before, .section-label::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-  }
-
-  /* MAIN GENERATOR */
-  .generator-section {
-    position: relative;
-    z-index: 2;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 24px 120px;
-  }
-
-  .section-title {
-    font-family: 'Orbitron', monospace;
-    font-size: clamp(1.5rem, 3vw, 2.5rem);
-    font-weight: 700;
-    text-align: center;
-    margin-bottom: 60px;
-  }
-
-  /* TABS */
-  .tabs {
-    display: flex;
-    justify-content: center;
-    gap: 4px;
-    margin-bottom: 40px;
-  }
-
-  .tab {
-    font-family: 'Orbitron', monospace;
-    font-size: 0.7rem;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    padding: 12px 28px;
-    cursor: pointer;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--muted);
-    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
-    transition: all 0.3s;
-  }
-
-  .tab.active {
-    background: linear-gradient(135deg, rgba(0,200,255,0.15), rgba(123,47,255,0.15));
-    border-color: var(--accent);
-    color: var(--accent);
-    box-shadow: var(--glow);
-  }
-
-  .tab:hover:not(.active) { color: var(--text); border-color: rgba(0,200,255,0.4); }
-
-  /* GENERATOR CARD */
-  .generator-card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .generator-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--accent), var(--accent2), transparent);
-  }
-
-  .gen-left {
-    padding: 48px;
-    border-right: 1px solid var(--border);
-  }
-
-  .gen-right {
-    padding: 48px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-  }
-
-  /* FORM ELEMENTS */
-  .form-group {
-    margin-bottom: 24px;
-  }
-
-  label {
-    display: block;
-    font-size: 0.7rem;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin-bottom: 10px;
-    font-family: 'Orbitron', monospace;
-  }
-
-  input[type="text"], textarea, select {
-    width: 100%;
-    background: rgba(0,200,255,0.03);
-    border: 1px solid var(--border);
-    color: var(--text);
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 1rem;
-    padding: 14px 16px;
-    outline: none;
-    transition: border-color 0.3s, box-shadow 0.3s;
-    appearance: none;
-  }
-
-  input[type="text"]:focus, textarea:focus, select:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 2px rgba(0,200,255,0.1), inset 0 0 20px rgba(0,200,255,0.03);
-  }
-
-  textarea { resize: vertical; min-height: 100px; }
-
-  select option { background: var(--panel); }
-
-  /* COLOR OPTIONS */
-  .color-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-  }
-
-  .color-group label { margin-bottom: 8px; }
-
-  input[type="color"] {
-    width: 100%;
-    height: 44px;
-    border: 1px solid var(--border);
-    background: transparent;
-    cursor: pointer;
-    padding: 4px;
-  }
-
-  /* SIZE SLIDER */
-  .size-control {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  input[type="range"] {
-    flex: 1;
-    -webkit-appearance: none;
-    height: 2px;
-    background: var(--border);
-    outline: none;
-  }
-
-  input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 14px; height: 14px;
-    background: var(--accent);
-    cursor: pointer;
-    clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
-    box-shadow: 0 0 10px var(--accent);
-  }
-
-  .size-value {
-    font-family: 'Orbitron', monospace;
-    font-size: 0.8rem;
-    color: var(--accent);
-    min-width: 50px;
-    text-align: right;
-  }
-
-  /* GENERATE BUTTON */
-  .generate-btn {
-    width: 100%;
-    padding: 18px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    border: none;
-    color: white;
-    font-family: 'Orbitron', monospace;
-    font-size: 0.8rem;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    cursor: pointer;
-    margin-top: 8px;
-    position: relative;
-    overflow: hidden;
-    transition: box-shadow 0.3s, transform 0.2s;
-  }
-
-  .generate-btn::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
-    transform: translateX(-100%);
-    transition: transform 0.5s;
-  }
-
-  .generate-btn:hover::before { transform: translateX(100%); }
-  .generate-btn:hover {
-    box-shadow: 0 0 40px rgba(0,200,255,0.5);
-    transform: translateY(-1px);
-  }
-
-  .generate-btn:active { transform: translateY(0); }
-
-  /* OUTPUT AREA */
-  .output-area {
-    width: 100%;
-    min-height: 300px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 24px;
-  }
-
-  .output-placeholder {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
-    color: var(--muted);
-  }
-
-  .output-placeholder svg { opacity: 0.3; }
-
-  .output-placeholder p {
-    font-size: 0.8rem;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-  }
-
-  #qr-output, #barcode-output {
-    background: white;
-    padding: 20px;
-    border: 2px solid var(--accent);
-    box-shadow: var(--glow);
-    animation: codeReveal 0.5s ease forwards;
-    display: none;
-  }
-
-  #barcode-output {
-    background: white;
-    padding: 16px;
-  }
-
-  #barcode-output svg { display: block; }
-
-  @keyframes codeReveal {
-    from { opacity: 0; transform: scale(0.9); filter: blur(10px); }
-    to { opacity: 1; transform: scale(1); filter: blur(0); }
-  }
-
-  .output-actions {
-    display: flex;
-    gap: 12px;
-    display: none;
-  }
-
-  .action-btn {
-    padding: 10px 20px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--text);
-    font-family: 'Orbitron', monospace;
-    font-size: 0.6rem;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    cursor: pointer;
-    clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
-    transition: all 0.3s;
-  }
-
-  .action-btn:hover { border-color: var(--accent3); color: var(--accent3); box-shadow: 0 0 15px rgba(0,255,163,0.3); }
-
-  /* FEATURES SECTION */
-  .features-section {
-    position: relative;
-    z-index: 2;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 24px 120px;
-  }
-
-  .features-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1px;
-    background: var(--border);
-    margin-top: 48px;
-  }
-
-  .feature-card {
-    background: var(--surface);
-    padding: 40px 32px;
-    position: relative;
-    overflow: hidden;
-    transition: background 0.3s;
-  }
-
-  .feature-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0;
-    width: 3px;
-    height: 0;
-    background: linear-gradient(to bottom, var(--accent), var(--accent2));
-    transition: height 0.4s;
-  }
-
-  .feature-card:hover { background: var(--panel); }
-  .feature-card:hover::before { height: 100%; }
-
-  .feature-icon {
-    font-size: 2rem;
-    margin-bottom: 20px;
-    display: block;
-  }
-
-  .feature-card h3 {
-    font-family: 'Orbitron', monospace;
-    font-size: 0.85rem;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    margin-bottom: 12px;
-    color: var(--text);
-  }
-
-  .feature-card p {
-    font-size: 0.95rem;
-    color: var(--muted);
-    line-height: 1.7;
-  }
-
-  /* HOW IT WORKS */
-  .steps-section {
-    position: relative;
-    z-index: 2;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 24px 120px;
-  }
-
-  .steps {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 24px;
-    margin-top: 48px;
-  }
-
-  .step {
-    text-align: center;
-    position: relative;
-  }
-
-  .step:not(:last-child)::after {
-    content: '→';
-    position: absolute;
-    right: -16px;
-    top: 28px;
-    color: var(--border);
-    font-size: 1.5rem;
-  }
-
-  .step-num {
-    font-family: 'Orbitron', monospace;
-    font-size: 3rem;
-    font-weight: 900;
-    color: transparent;
-    -webkit-text-stroke: 1px rgba(0,200,255,0.3);
-    line-height: 1;
-    margin-bottom: 20px;
-  }
-
-  .step h4 {
-    font-family: 'Orbitron', monospace;
-    font-size: 0.75rem;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    margin-bottom: 10px;
-    color: var(--accent);
-  }
-
-  .step p { font-size: 0.9rem; color: var(--muted); line-height: 1.6; }
-
-  /* FORMAT SECTION */
-  .formats-section {
-    position: relative;
-    z-index: 2;
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-    padding: 80px 24px;
-    margin-bottom: 120px;
-  }
-
-  .formats-inner {
-    max-width: 1200px;
-    margin: 0 auto;
-  }
-
-  .formats-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    justify-content: center;
-    margin-top: 40px;
-  }
-
-  .format-chip {
-    padding: 8px 20px;
-    border: 1px solid var(--border);
-    font-size: 0.75rem;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--muted);
-    font-family: 'Orbitron', monospace;
-    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
-    transition: all 0.3s;
-  }
-
-  .format-chip:hover {
-    border-color: var(--accent);
-    color: var(--accent);
-    background: rgba(0,200,255,0.05);
-  }
-
-  /* FOOTER */
-  footer {
-    position: relative;
-    z-index: 2;
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-    padding: 48px;
-    text-align: center;
-  }
-
-  .footer-logo {
-    font-family: 'Orbitron', monospace;
-    font-weight: 900;
-    font-size: 1.2rem;
-    letter-spacing: 4px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 16px;
-  }
-
-  footer p {
-    font-size: 0.8rem;
-    color: var(--muted);
-    letter-spacing: 1px;
-  }
-
-  /* FLOATING PARTICLES */
-  .particles {
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 1;
-    overflow: hidden;
-  }
-
-  .particle {
-    position: absolute;
-    width: 2px;
-    height: 2px;
-    background: var(--accent);
-    border-radius: 50%;
-    animation: float linear infinite;
-    opacity: 0;
-  }
-
-  @keyframes float {
-    0% { transform: translateY(100vh) translateX(0); opacity: 0; }
-    10% { opacity: 0.6; }
-    90% { opacity: 0.3; }
-    100% { transform: translateY(-10vh) translateX(var(--drift)); opacity: 0; }
-  }
-
-  /* SCROLL REVEAL */
-  .reveal {
-    opacity: 0;
-    transform: translateY(40px);
-    transition: opacity 0.7s ease, transform 0.7s ease;
-  }
-
-  .reveal.visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  /* RESPONSIVE */
-  @media (max-width: 768px) {
-    nav { padding: 16px 20px; }
-    .nav-links { display: none; }
-    .generator-card { grid-template-columns: 1fr; }
-    .gen-left { border-right: none; border-bottom: 1px solid var(--border); }
-    .features-grid { grid-template-columns: 1fr; }
-    .steps { grid-template-columns: repeat(2, 1fr); }
-    .step:not(:last-child)::after { display: none; }
-    .color-row { grid-template-columns: 1fr; }
-  }
-
-  /* CORNER DECORATIONS */
-  .corner-deco {
-    position: absolute;
-    width: 20px; height: 20px;
-    border-color: var(--accent);
-    border-style: solid;
-    pointer-events: none;
-  }
-
-  .corner-deco.tl { top: 0; left: 0; border-width: 2px 0 0 2px; }
-  .corner-deco.tr { top: 0; right: 0; border-width: 2px 2px 0 0; }
-  .corner-deco.bl { bottom: 0; left: 0; border-width: 0 0 2px 2px; }
-  .corner-deco.br { bottom: 0; right: 0; border-width: 0 2px 2px 0; }
-
-  /* LOADING ANIMATION */
-  .loading-ring {
-    width: 60px; height: 60px;
-    border: 2px solid var(--border);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    display: none;
-  }
-
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-
-  /* TYPE INDICATOR */
-  .type-indicator {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 24px;
-  }
-
-  .type-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--muted);
-    transition: background 0.3s;
-  }
-
-  .type-dot.active {
-    background: var(--accent);
-    box-shadow: 0 0 8px var(--accent);
-  }
-
-  /* GLITCH EFFECT ON HOVER LOGO */
-  .logo:hover {
-    animation: glitch 0.3s ease;
-  }
-
-  @keyframes glitch {
-    0% { transform: translate(0); }
-    20% { transform: translate(-2px, 1px); }
-    40% { transform: translate(2px, -1px); }
-    60% { transform: translate(-1px, 2px); }
-    80% { transform: translate(1px, -2px); }
-    100% { transform: translate(0); }
-  }
+:root{--bg:#030610;--surface:#080f1e;--panel:#0c1528;--panel2:#0f1b30;--border:rgba(0,200,255,0.13);--border2:rgba(123,47,255,0.2);--accent:#00c8ff;--accent2:#7b2fff;--accent3:#00ffa3;--accentR:#ff4d6d;--text:#cde8ff;--muted:#4a6a8a;--muted2:#2a3f58;--glow:0 0 24px rgba(0,200,255,0.45);--glow2:0 0 30px rgba(123,47,255,0.5);--glow3:0 0 24px rgba(0,255,163,0.4)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,200,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,255,0.025) 1px,transparent 1px);background-size:48px 48px;animation:gridMove 24s linear infinite;pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 50% -20%,rgba(123,47,255,0.1) 0%,transparent 70%),radial-gradient(ellipse 50% 40% at 100% 100%,rgba(0,200,255,0.06) 0%,transparent 70%),radial-gradient(ellipse 40% 30% at 0% 80%,rgba(0,255,163,0.04) 0%,transparent 70%);pointer-events:none;z-index:0}
+@keyframes gridMove{0%{transform:translateY(0)}100%{transform:translateY(48px)}}
+.cursor-glow{position:fixed;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(0,200,255,0.05) 0%,transparent 70%);pointer-events:none;transform:translate(-50%,-50%);z-index:9999;transition:left .08s,top .08s}
+
+/* STATUS BAR */
+.status-bar{background:rgba(0,200,255,0.05);border-bottom:1px solid var(--border);padding:8px 48px;display:flex;align-items:center;gap:32px;font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'Orbitron',monospace;position:relative;z-index:99;flex-wrap:wrap}
+.status-item{display:flex;align-items:center;gap:6px}
+.status-dot{width:5px;height:5px;border-radius:50%;background:var(--accent3);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1;box-shadow:0 0 6px var(--accent3)}50%{opacity:.3;box-shadow:none}}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:18px 48px;background:rgba(3,6,16,0.85);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);animation:slideDown .8s ease forwards}
+@keyframes slideDown{from{transform:translateY(-100%);opacity:0}to{transform:translateY(0);opacity:1}}
+.logo{font-family:'Orbitron',monospace;font-weight:900;font-size:1.4rem;letter-spacing:4px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.logo:hover{animation:glitch .3s ease}
+@keyframes glitch{0%{transform:translate(0)}20%{transform:translate(-2px,1px)}40%{transform:translate(2px,-1px)}60%{transform:translate(-1px,2px)}80%{transform:translate(1px,-2px)}100%{transform:translate(0)}}
+.nav-links{display:flex;gap:28px;list-style:none;font-size:.78rem;letter-spacing:2px;text-transform:uppercase;font-weight:600}
+.nav-links a{color:var(--muted);text-decoration:none;transition:color .3s;position:relative}
+.nav-links a::after{content:'';position:absolute;bottom:-4px;left:0;right:0;height:1px;background:var(--accent);transform:scaleX(0);transition:transform .3s;transform-origin:left}
+.nav-links a:hover{color:var(--accent)}.nav-links a:hover::after{transform:scaleX(1)}
+.nav-right{display:flex;align-items:center;gap:14px}
+.nav-badge{font-size:.58rem;letter-spacing:2px;text-transform:uppercase;color:var(--accent3);border:1px solid rgba(0,255,163,0.3);padding:4px 10px;font-family:'Orbitron',monospace}
+.nav-cta{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:white;font-family:'Orbitron',monospace;font-size:.65rem;letter-spacing:2px;padding:10px 20px;cursor:pointer;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);transition:opacity .3s,box-shadow .3s}
+.nav-cta:hover{opacity:.85;box-shadow:var(--glow)}
+
+/* HERO */
+.hero{position:relative;z-index:2;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:120px 24px 80px;overflow:hidden}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(0,255,163,0.3);background:rgba(0,255,163,0.04);padding:6px 18px;font-size:.7rem;letter-spacing:3px;text-transform:uppercase;color:var(--accent3);margin-bottom:32px;animation:fadeUp .8s .2s ease both;font-family:'Orbitron',monospace}
+.badge-dot{width:6px;height:6px;border-radius:50%;background:var(--accent3);animation:blink 2s infinite}
+.hero h1{font-family:'Orbitron',monospace;font-weight:900;font-size:clamp(2.6rem,6.5vw,5.5rem);line-height:1.05;margin-bottom:24px;animation:fadeUp .8s .4s ease both}
+.h1-line1{color:var(--text)}.h1-line2{background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 50%,var(--accent3) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;background-size:200%;animation:gradShift 4s ease infinite}
+@keyframes gradShift{0%,100%{background-position:0%}50%{background-position:100%}}
+.hero p{font-size:1.1rem;color:var(--muted);max-width:560px;line-height:1.75;margin-bottom:48px;animation:fadeUp .8s .6s ease both}
+.hero-ctas{display:flex;gap:14px;animation:fadeUp .8s .8s ease both;flex-wrap:wrap;justify-content:center}
+.scan-line{position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:scanDown 5s linear infinite;opacity:.3}
+@keyframes scanDown{0%{top:0}100%{top:100%}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:white;font-family:'Orbitron',monospace;font-size:.72rem;letter-spacing:2px;padding:16px 34px;cursor:pointer;clip-path:polygon(12px 0%,100% 0%,calc(100% - 12px) 100%,0% 100%);transition:box-shadow .3s,transform .3s;text-transform:uppercase;position:relative;overflow:hidden}
+.btn-primary::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 30%,rgba(255,255,255,.15) 50%,transparent 70%);transform:translateX(-100%);transition:transform .5s}
+.btn-primary:hover::before{transform:translateX(100%)}
+.btn-primary:hover{box-shadow:0 0 50px rgba(0,200,255,.5);transform:translateY(-2px)}
+.btn-secondary{background:transparent;border:1px solid var(--border);color:var(--text);font-family:'Orbitron',monospace;font-size:.72rem;letter-spacing:2px;padding:16px 34px;cursor:pointer;clip-path:polygon(12px 0%,100% 0%,calc(100% - 12px) 100%,0% 100%);transition:border-color .3s,color .3s;text-transform:uppercase}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent)}
+
+/* STATS */
+.stats{position:relative;z-index:2;display:flex;justify-content:center;gap:1px;background:var(--border);margin:0 0 90px;flex-wrap:wrap}
+.stat-item{background:var(--surface);padding:26px 48px;text-align:center;flex:1;min-width:140px;transition:background .3s}
+.stat-item:hover{background:var(--panel)}
+.stat-num{font-family:'Orbitron',monospace;font-size:1.9rem;font-weight:700;color:var(--accent);display:block}
+.stat-label{font-size:.68rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:6px;display:block}
+
+/* SECTION */
+.section-label{display:flex;align-items:center;gap:12px;font-size:.65rem;letter-spacing:4px;text-transform:uppercase;color:var(--accent);margin-bottom:16px;font-family:'Orbitron',monospace}
+.section-label::before,.section-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border))}
+.section-title{font-family:'Orbitron',monospace;font-size:clamp(1.4rem,3vw,2.2rem);font-weight:700;text-align:center;margin-bottom:12px}
+.section-sub{text-align:center;color:var(--muted);font-size:1rem;margin-bottom:52px;max-width:480px;margin-left:auto;margin-right:auto}
+
+/* GENERATOR */
+.generator-section{position:relative;z-index:2;max-width:1280px;margin:0 auto;padding:0 24px 120px}
+
+/* TABS */
+.tabs{display:flex;justify-content:center;gap:3px;margin-bottom:40px;flex-wrap:wrap}
+.tab{font-family:'Orbitron',monospace;font-size:.62rem;letter-spacing:2px;text-transform:uppercase;padding:12px 22px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);transition:all .3s;display:flex;align-items:center;gap:7px}
+.tab.active{background:linear-gradient(135deg,rgba(0,200,255,.12),rgba(123,47,255,.12));border-color:var(--accent);color:var(--accent);box-shadow:var(--glow)}
+.tab.active-pdf{background:linear-gradient(135deg,rgba(255,77,109,.1),rgba(123,47,255,.1));border-color:var(--accentR);color:var(--accentR);box-shadow:0 0 22px rgba(255,77,109,.3)}
+.tab.active-bc{background:linear-gradient(135deg,rgba(0,255,163,.1),rgba(0,200,255,.1));border-color:var(--accent3);color:var(--accent3);box-shadow:var(--glow3)}
+.tab:hover:not(.active):not(.active-pdf):not(.active-bc){color:var(--text);border-color:rgba(0,200,255,.3)}
+
+/* CARD */
+.generator-card{background:var(--panel);border:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr;position:relative;overflow:hidden;opacity:0;transform:translateY(20px);transition:opacity .5s,transform .5s}
+.generator-card.show{opacity:1;transform:translateY(0)}
+.generator-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),var(--accent2),transparent)}
+.generator-card.pdf-card::before{background:linear-gradient(90deg,transparent,var(--accentR),var(--accent2),transparent)}
+.generator-card.bc-card::before{background:linear-gradient(90deg,transparent,var(--accent3),var(--accent),transparent)}
+.cdeco{position:absolute;width:16px;height:16px;border-color:var(--accent);border-style:solid;pointer-events:none}
+.cdeco.tl{top:0;left:0;border-width:2px 0 0 2px}.cdeco.tr{top:0;right:0;border-width:2px 2px 0 0}
+.cdeco.bl{bottom:0;left:0;border-width:0 0 2px 2px}.cdeco.br{bottom:0;right:0;border-width:0 2px 2px 0}
+.pdf-card .cdeco{border-color:var(--accentR)}.bc-card .cdeco{border-color:var(--accent3)}
+.gen-left{padding:40px;border-right:1px solid var(--border)}
+.gen-right{padding:40px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--surface),var(--panel))}
+
+/* FORM */
+.form-group{margin-bottom:20px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+label{display:block;font-size:.62rem;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:8px;font-family:'Orbitron',monospace}
+.pdf-card label{color:var(--accentR)}.bc-card label{color:var(--accent3)}
+input[type="text"],input[type="url"],textarea,select{width:100%;background:rgba(0,200,255,.03);border:1px solid var(--border);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:.98rem;font-weight:500;padding:12px 15px;outline:none;transition:border-color .3s,box-shadow .3s;appearance:none}
+input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(0,200,255,.08)}
+.pdf-card input:focus,.pdf-card textarea:focus,.pdf-card select:focus{border-color:var(--accentR);box-shadow:0 0 0 2px rgba(255,77,109,.08)}
+.bc-card input:focus,.bc-card select:focus{border-color:var(--accent3);box-shadow:0 0 0 2px rgba(0,255,163,.08)}
+textarea{resize:vertical;min-height:86px}
+select option{background:var(--panel)}
+input[type="color"]{width:100%;height:42px;border:1px solid var(--border);background:transparent;cursor:pointer;padding:3px}
+input[type="range"]{width:100%;-webkit-appearance:none;height:2px;background:var(--border);outline:none}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:var(--accent);cursor:pointer;clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);box-shadow:0 0 8px var(--accent)}
+.bc-card input[type="range"]::-webkit-slider-thumb{background:var(--accent3);box-shadow:0 0 8px var(--accent3)}
+.size-control{display:flex;align-items:center;gap:10px}
+.size-val{font-family:'Orbitron',monospace;font-size:.72rem;color:var(--accent);min-width:50px;text-align:right}
+.bc-card .size-val{color:var(--accent3)}
+
+/* TOGGLE */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 13px;border:1px solid var(--border);background:rgba(0,200,255,.02);margin-bottom:8px}
+.toggle-label{font-size:.68rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'Orbitron',monospace}
+.toggle{position:relative;width:36px;height:19px;cursor:pointer;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;background:var(--muted2);transition:.3s;border-radius:2px}
+.toggle-slider::before{content:'';position:absolute;height:13px;width:13px;left:3px;top:3px;background:var(--muted);transition:.3s;border-radius:1px}
+.toggle input:checked+.toggle-slider{background:rgba(0,200,255,.3)}
+.toggle input:checked+.toggle-slider::before{transform:translateX(17px);background:var(--accent)}
+.bc-card .toggle input:checked+.toggle-slider{background:rgba(0,255,163,.3)}
+.bc-card .toggle input:checked+.toggle-slider::before{background:var(--accent3)}
+
+/* GENERATE BTN */
+.generate-btn{width:100%;padding:17px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:white;font-family:'Orbitron',monospace;font-size:.72rem;letter-spacing:3px;text-transform:uppercase;cursor:pointer;margin-top:10px;position:relative;overflow:hidden;transition:box-shadow .3s,transform .2s}
+.generate-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 30%,rgba(255,255,255,.15) 50%,transparent 70%);transform:translateX(-100%);transition:transform .5s}
+.generate-btn:hover::before{transform:translateX(100%)}
+.generate-btn:hover{box-shadow:0 0 50px rgba(0,200,255,.5);transform:translateY(-1px)}
+.generate-btn:active{transform:translateY(0)}
+.pdf-btn{background:linear-gradient(135deg,var(--accentR),var(--accent2))}
+.pdf-btn:hover{box-shadow:0 0 50px rgba(255,77,109,.4)!important}
+.bc-btn{background:linear-gradient(135deg,var(--accent3),var(--accent))}
+.bc-btn:hover{box-shadow:0 0 50px rgba(0,255,163,.4)!important}
+
+/* OUTPUT */
+.output-area{width:100%;min-height:310px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px}
+.output-placeholder{display:flex;flex-direction:column;align-items:center;gap:14px;color:var(--muted);opacity:.45}
+.output-placeholder p{font-size:.7rem;letter-spacing:2px;text-transform:uppercase;font-family:'Orbitron',monospace}
+.code-output{background:white;padding:16px;border:2px solid var(--accent);box-shadow:var(--glow);animation:codeReveal .5s ease forwards;display:none}
+.pdf-code-output{border-color:var(--accentR);box-shadow:0 0 24px rgba(255,77,109,.4)}
+.bc-code-output{border-color:var(--accent3);box-shadow:var(--glow3)}
+@keyframes codeReveal{from{opacity:0;transform:scale(.88);filter:blur(10px)}to{opacity:1;transform:scale(1);filter:blur(0)}}
+.output-actions{display:none;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:4px}
+.action-btn{padding:9px 16px;border:1px solid var(--border);background:transparent;color:var(--text);font-family:'Orbitron',monospace;font-size:.57rem;letter-spacing:2px;text-transform:uppercase;cursor:pointer;clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);transition:all .3s}
+.action-btn:hover{border-color:var(--accent3);color:var(--accent3);box-shadow:var(--glow3)}
+.loading-ring{width:52px;height:52px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;display:none}
+.pdf-ring{border-top-color:var(--accentR)}.bc-ring{border-top-color:var(--accent3)}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* UPLOAD ZONE */
+.upload-zone{border:2px dashed var(--border);padding:36px 20px;text-align:center;cursor:pointer;transition:all .3s;position:relative;background:rgba(255,77,109,.02);overflow:hidden}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--accentR);background:rgba(255,77,109,.05);box-shadow:0 0 30px rgba(255,77,109,.1)}
+.upload-zone input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;z-index:10;font-size:0}
+.upload-zone .upload-icon,.upload-zone h4,.upload-zone p,.upload-zone .upload-sub{pointer-events:none}
+.upload-icon{font-size:2.2rem;margin-bottom:10px;display:block}
+.upload-zone h4{font-family:'Orbitron',monospace;font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:var(--accentR);margin-bottom:6px}
+.upload-zone p{font-size:.82rem;color:var(--muted)}
+.pdf-info{display:none;padding:14px;background:rgba(255,77,109,.05);border:1px solid rgba(255,77,109,.2);margin-top:14px}
+.pdf-info-row{display:flex;justify-content:space-between;margin-bottom:5px}
+.pdf-info-label{color:var(--muted);font-size:.6rem;letter-spacing:2px;text-transform:uppercase}
+.pdf-info-val{color:var(--accentR);font-family:'Orbitron',monospace;font-size:.75rem}
+.progress-bar{height:2px;background:linear-gradient(90deg,var(--accentR),var(--accent2),var(--accent));width:0%;transition:width .4s ease;margin-top:10px;display:none}
+.pdf-link-note{font-size:.76rem;color:var(--muted);padding:10px 12px;background:rgba(0,200,255,.04);border-left:2px solid var(--accent);margin-top:10px;line-height:1.6}
+
+/* ADVANCED */
+.advanced-toggle{display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 0;color:var(--muted);font-size:.68rem;letter-spacing:2px;text-transform:uppercase;border:none;background:transparent;font-family:'Orbitron',monospace;transition:color .3s;width:100%}
+.advanced-toggle:hover{color:var(--accent)}.adv-icon{transition:transform .3s}
+.advanced-toggle.open .adv-icon{transform:rotate(90deg)}
+.advanced-panel{display:none;padding-top:14px;border-top:1px solid var(--border);margin-top:4px;animation:fadeIn .3s ease}
+.advanced-panel.open{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+
+/* LOGO UPLOAD */
+.logo-upload-mini{display:flex;align-items:center;gap:10px}
+.logo-preview{width:40px;height:40px;border:1px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.logo-preview img{width:100%;height:100%;object-fit:contain}
+.logo-upload-btn{flex:1;padding:10px;border:1px dashed var(--border);background:transparent;color:var(--muted);font-family:'Orbitron',monospace;font-size:.57rem;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .3s;position:relative;overflow:hidden;text-align:center}
+.logo-upload-btn input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.logo-upload-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* MARGIN BTNS */
+.margin-btns{display:flex;gap:4px}
+.margin-btn{flex:1;padding:8px 4px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Orbitron',monospace;font-size:.52rem;cursor:pointer;text-align:center;transition:all .3s}
+.margin-btn.sel{border-color:var(--accent);color:var(--accent);background:rgba(0,200,255,.06)}
+
+/* OUTPUT NOTE */
+.output-note{font-size:.62rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);text-align:center;line-height:1.8;display:none;padding:0 10px}
+
+/* FEATURES */
+.features-section{position:relative;z-index:2;max-width:1280px;margin:0 auto;padding:0 24px 120px}
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);margin-top:48px}
+.feature-card{background:var(--surface);padding:34px 26px;position:relative;overflow:hidden;transition:background .3s}
+.feature-card::before{content:'';position:absolute;top:0;left:0;width:2px;height:0;background:linear-gradient(to bottom,var(--accent),var(--accent2));transition:height .4s}
+.feature-card:hover{background:var(--panel)}.feature-card:hover::before{height:100%}
+.feature-icon{font-size:1.7rem;margin-bottom:16px;display:block}
+.feature-card h3{font-family:'Orbitron',monospace;font-size:.72rem;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;color:var(--text)}
+.feature-card p{font-size:.9rem;color:var(--muted);line-height:1.7}
+
+/* STEPS */
+.steps-section{position:relative;z-index:2;max-width:1280px;margin:0 auto;padding:0 24px 120px}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:48px}
+.step{text-align:center;position:relative;padding:22px;border:1px solid var(--border);background:var(--surface);transition:border-color .3s,background .3s}
+.step:hover{border-color:rgba(0,200,255,.3);background:var(--panel)}
+.step:not(:last-child)::after{content:'→';position:absolute;right:-13px;top:50%;transform:translateY(-50%);color:var(--muted2);font-size:1.2rem;z-index:1}
+.step-num{font-family:'Orbitron',monospace;font-size:2.4rem;font-weight:900;color:transparent;-webkit-text-stroke:1px rgba(0,200,255,.25);line-height:1;margin-bottom:14px}
+.step h4{font-family:'Orbitron',monospace;font-size:.68rem;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;color:var(--accent)}
+.step p{font-size:.86rem;color:var(--muted);line-height:1.6}
+
+/* FORMATS */
+.formats-section{position:relative;z-index:2;background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:76px 24px;margin-bottom:120px}
+.formats-inner{max-width:1280px;margin:0 auto}
+.formats-grid{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;margin-top:40px}
+.format-chip{padding:7px 16px;border:1px solid var(--border);font-size:.67rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'Orbitron',monospace;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);transition:all .3s}
+.format-chip:hover{border-color:var(--accent);color:var(--accent);background:rgba(0,200,255,.04)}
+.format-chip.special{border-color:rgba(255,77,109,.3);color:var(--accentR)}
+.format-chip.special:hover{border-color:var(--accentR);background:rgba(255,77,109,.05)}
+
+/* HISTORY */
+.history-section{position:relative;z-index:2;max-width:1280px;margin:0 auto;padding:0 24px 120px}
+.history-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:40px}
+.history-item{border:1px solid var(--border);background:var(--surface);padding:14px;cursor:pointer;transition:all .3s;position:relative;overflow:hidden}
+.history-item:hover{border-color:var(--accent);background:var(--panel);box-shadow:var(--glow)}
+.history-thumb{width:100%;height:76px;background:white;display:flex;align-items:center;justify-content:center;margin-bottom:9px;overflow:hidden}
+.history-thumb canvas,.history-thumb img,.history-thumb svg{max-width:100%;max-height:100%;object-fit:contain}
+.history-type{color:var(--accent);font-size:.6rem;letter-spacing:2px;text-transform:uppercase;font-family:'Orbitron',monospace;margin-bottom:3px}
+.history-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.68rem;color:var(--muted)}
+.history-time{font-size:.56rem;color:var(--muted2);margin-top:3px;font-family:'Orbitron',monospace}
+.history-empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:40px;font-size:.75rem;letter-spacing:2px;text-transform:uppercase;font-family:'Orbitron',monospace}
+
+/* FOOTER */
+footer{position:relative;z-index:2;background:var(--surface);border-top:1px solid var(--border);padding:48px;text-align:center}
+.footer-logo{font-family:'Orbitron',monospace;font-weight:900;font-size:1.2rem;letter-spacing:5px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:16px}
+.footer-links{display:flex;justify-content:center;gap:28px;margin-bottom:20px;list-style:none;font-size:.68rem;letter-spacing:2px;text-transform:uppercase}
+.footer-links a{color:var(--muted);text-decoration:none;transition:color .3s}.footer-links a:hover{color:var(--accent)}
+footer p{font-size:.75rem;color:var(--muted2)}
+
+/* PARTICLES */
+.particles{position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden}
+.particle{position:absolute;width:2px;height:2px;border-radius:50%;animation:floatUp linear infinite;opacity:0}
+@keyframes floatUp{0%{transform:translateY(100vh) translateX(0);opacity:0}10%{opacity:.5}90%{opacity:.2}100%{transform:translateY(-10vh) translateX(var(--drift));opacity:0}}
+
+/* REVEAL */
+.reveal{opacity:0;transform:translateY(36px);transition:opacity .7s ease,transform .7s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+/* NOTIFICATION */
+.notification{position:fixed;bottom:28px;right:28px;z-index:9999;padding:12px 22px;background:var(--panel);border:1px solid var(--accent3);color:var(--accent3);font-family:'Orbitron',monospace;font-size:.62rem;letter-spacing:2px;text-transform:uppercase;clip-path:polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%);transform:translateX(150%);transition:transform .4s cubic-bezier(0.175,0.885,0.32,1.275);box-shadow:var(--glow3)}
+.notification.show{transform:translateX(0)}
+
+/* BC FORMAT HINT */
+.format-hint{font-size:.72rem;color:var(--muted2);margin-top:6px;line-height:1.5;font-style:italic}
+
+@media(max-width:900px){
+  nav{padding:16px 20px}.nav-links{display:none}
+  .generator-card{grid-template-columns:1fr}.gen-left{border-right:none;border-bottom:1px solid var(--border)}
+  .features-grid{grid-template-columns:1fr 1fr}.steps{grid-template-columns:1fr 1fr}
+  .step:not(:last-child)::after{display:none}.history-grid{grid-template-columns:repeat(3,1fr)}
+  .form-row{grid-template-columns:1fr}.status-bar{display:none}
+}
+@media(max-width:600px){
+  .features-grid{grid-template-columns:1fr}.steps{grid-template-columns:1fr}.history-grid{grid-template-columns:1fr 1fr}
+}
 </style>
 </head>
 <body>
 
-<div class="noise"></div>
-
-<!-- PARTICLES -->
+<div class="cursor-glow" id="cursorGlow"></div>
 <div class="particles" id="particles"></div>
+
+<!-- STATUS BAR -->
+<div class="status-bar">
+  <div class="status-item"><span class="status-dot"></span>Systems Online</div>
+  <div class="status-item">Engine v3.2</div>
+  <div class="status-item">15 Formats</div>
+  <div class="status-item">PDF Engine ✓</div>
+  <div class="status-item" id="genCount">Generated: 0</div>
+  <div class="status-item">Ctrl+Enter to Generate</div>
+</div>
 
 <!-- NAV -->
 <nav>
   <div class="logo">CYBERNET</div>
   <ul class="nav-links">
     <li><a href="#generator">Generator</a></li>
+    <li><a href="#history">History</a></li>
     <li><a href="#features">Features</a></li>
     <li><a href="#formats">Formats</a></li>
-    <li><a href="#how">How It Works</a></li>
   </ul>
-  <button class="nav-cta" onclick="document.getElementById('generator').scrollIntoView({behavior:'smooth'})">Launch App</button>
+  <div class="nav-right">
+    <span class="nav-badge">PRO</span>
+    <button class="nav-cta" onclick="document.getElementById('generator').scrollIntoView({behavior:'smooth'})">Launch App</button>
+  </div>
 </nav>
 
 <!-- HERO -->
 <section class="hero">
   <div class="scan-line"></div>
-  <div class="hero-badge">
-    <span class="badge-dot"></span>
-    Next-Gen Code Generator
-  </div>
-  <h1>
-    <div class="h1-line1">Encode Your</div>
-    <div class="h1-line2">Digital Future</div>
-  </h1>
-  <p>Generate professional QR codes and barcodes instantly. Customize, download, and deploy in seconds. Enterprise-grade quality for modern brands.</p>
+  <div class="hero-badge"><span class="badge-dot"></span>v2.0 — PDF→QR Now Live</div>
+  <h1><div class="h1-line1">Encode Your</div><div class="h1-line2">Digital Future</div></h1>
+  <p>Generate QR codes from text, URLs, WiFi, vCards, and PDFs. Create professional barcodes in 14 formats. Zero servers — 100% private.</p>
   <div class="hero-ctas">
     <button class="btn-primary" onclick="document.getElementById('generator').scrollIntoView({behavior:'smooth'})">Start Generating</button>
     <button class="btn-secondary" onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})">Explore Features</button>
@@ -958,235 +311,346 @@
 
 <!-- STATS -->
 <div class="stats">
-  <div class="stat-item">
-    <span class="stat-num" data-target="2M">0</span>
-    <span class="stat-label">Codes Generated</span>
-  </div>
-  <div class="stat-item">
-    <span class="stat-num" data-target="15">0</span>
-    <span class="stat-label">Barcode Formats</span>
-  </div>
-  <div class="stat-item">
-    <span class="stat-num" data-target="99.9">0</span>
-    <span class="stat-label">Uptime %</span>
-  </div>
-  <div class="stat-item">
-    <span class="stat-num" data-target="0ms">&lt;1ms</span>
-    <span class="stat-label">Generation Time</span>
-  </div>
+  <div class="stat-item"><span class="stat-num">2M+</span><span class="stat-label">Codes Generated</span></div>
+  <div class="stat-item"><span class="stat-num">15</span><span class="stat-label">Barcode Formats</span></div>
+  <div class="stat-item"><span class="stat-num">99.9%</span><span class="stat-label">Uptime</span></div>
+  <div class="stat-item"><span class="stat-num">&lt;1ms</span><span class="stat-label">Generation Speed</span></div>
+  <div class="stat-item"><span class="stat-num">0</span><span class="stat-label">Data Collected</span></div>
 </div>
 
 <!-- GENERATOR -->
 <section class="generator-section" id="generator">
   <div class="section-label">Core Module</div>
   <h2 class="section-title reveal">Code Generator <span style="color:var(--accent)">Interface</span></h2>
+  <p class="section-sub reveal">QR Code · PDF→QR · Barcode — Three powerful engines, one platform</p>
 
   <div class="tabs">
-    <button class="tab active" onclick="switchTab('qr', this)">QR Code</button>
-    <button class="tab" onclick="switchTab('barcode', this)">Barcode</button>
+    <button class="tab active" onclick="switchTab('qr',this)">⬡ QR Code</button>
+    <button class="tab" onclick="switchTab('pdf',this)">📄 PDF → QR</button>
+    <button class="tab" onclick="switchTab('bc',this)">▮▮▯ Barcode</button>
   </div>
 
-  <!-- QR CODE PANEL -->
-  <div class="generator-card" id="qr-panel">
-    <div class="corner-deco tl"></div>
-    <div class="corner-deco tr"></div>
-    <div class="corner-deco bl"></div>
-    <div class="corner-deco br"></div>
+  <!-- ===== QR PANEL ===== -->
+  <div class="generator-card show" id="qr-panel">
+    <div class="cdeco tl"></div><div class="cdeco tr"></div><div class="cdeco bl"></div><div class="cdeco br"></div>
     <div class="gen-left">
       <div class="form-group">
-        <label>Content / URL</label>
-        <textarea id="qr-text" placeholder="https://your-website.com or any text..."></textarea>
-      </div>
-      <div class="color-row">
-        <div class="color-group form-group">
-          <label>Foreground</label>
-          <input type="color" id="qr-fg" value="#000000">
-        </div>
-        <div class="color-group form-group">
-          <label>Background</label>
-          <input type="color" id="qr-bg" value="#ffffff">
-        </div>
-      </div>
-      <div class="form-group">
-        <label>Size</label>
-        <div class="size-control">
-          <input type="range" id="qr-size" min="128" max="512" value="256" oninput="document.getElementById('qr-size-val').textContent = this.value + 'px'">
-          <span class="size-value" id="qr-size-val">256px</span>
-        </div>
-      </div>
-      <div class="form-group">
-        <label>Error Correction</label>
-        <select id="qr-ec">
-          <option value="L">Low (7%)</option>
-          <option value="M" selected>Medium (15%)</option>
-          <option value="Q">Quartile (25%)</option>
-          <option value="H">High (30%)</option>
+        <label>Content Type</label>
+        <select id="qr-type" onchange="updateQRType()">
+          <option value="text">Plain Text</option>
+          <option value="url">URL / Website Link</option>
+          <option value="wifi">WiFi Credentials</option>
+          <option value="vcard">vCard / Contact Info</option>
+          <option value="email">Email Message</option>
+          <option value="sms">SMS Message</option>
+          <option value="phone">Phone Number</option>
+          <option value="geo">GPS Location</option>
         </select>
       </div>
+
+      <!-- DYNAMIC FIELDS -->
+      <div id="qr-main-input">
+        <div class="form-group"><label id="qr-content-label">Text / Content</label>
+        <textarea id="qr-text" placeholder="Enter your text or URL..."></textarea></div>
+      </div>
+      <div id="wifi-fields" style="display:none">
+        <div class="form-row">
+          <div class="form-group"><label>Network Name (SSID)</label><input type="text" id="wifi-ssid" placeholder="MyWiFi"></div>
+          <div class="form-group"><label>Password</label><input type="text" id="wifi-pass" placeholder="password123"></div>
+        </div>
+        <div class="form-group"><label>Security</label>
+        <select id="wifi-sec"><option value="WPA">WPA / WPA2</option><option value="WEP">WEP</option><option value="nopass">Open (No Password)</option></select></div>
+        <div class="toggle-row"><span class="toggle-label">Hidden Network</span><label class="toggle"><input type="checkbox" id="wifi-hidden"><span class="toggle-slider"></span></label></div>
+      </div>
+      <div id="vcard-fields" style="display:none">
+        <div class="form-row">
+          <div class="form-group"><label>First Name</label><input type="text" id="vc-first" placeholder="John"></div>
+          <div class="form-group"><label>Last Name</label><input type="text" id="vc-last" placeholder="Doe"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Phone</label><input type="text" id="vc-phone" placeholder="+1234567890"></div>
+          <div class="form-group"><label>Email</label><input type="text" id="vc-email" placeholder="john@example.com"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Organization</label><input type="text" id="vc-org" placeholder="Company Inc."></div>
+          <div class="form-group"><label>Website</label><input type="text" id="vc-url" placeholder="https://"></div>
+        </div>
+      </div>
+      <div id="email-fields" style="display:none">
+        <div class="form-group"><label>To</label><input type="text" id="em-to" placeholder="someone@example.com"></div>
+        <div class="form-group"><label>Subject</label><input type="text" id="em-sub" placeholder="Hello!"></div>
+        <div class="form-group"><label>Body</label><textarea id="em-body" placeholder="Message..."></textarea></div>
+      </div>
+      <div id="sms-fields" style="display:none">
+        <div class="form-group"><label>Phone Number</label><input type="text" id="sms-num" placeholder="+1234567890"></div>
+        <div class="form-group"><label>Message</label><textarea id="sms-msg" placeholder="Your message..."></textarea></div>
+      </div>
+      <div id="geo-fields" style="display:none">
+        <div class="form-row">
+          <div class="form-group"><label>Latitude</label><input type="text" id="geo-lat" placeholder="40.7128"></div>
+          <div class="form-group"><label>Longitude</label><input type="text" id="geo-lng" placeholder="-74.0060"></div>
+        </div>
+      </div>
+
+      <!-- COLORS & SIZE -->
+      <div class="form-row">
+        <div class="form-group"><label>Foreground</label><input type="color" id="qr-fg" value="#000000"></div>
+        <div class="form-group"><label>Background</label><input type="color" id="qr-bg" value="#ffffff"></div>
+      </div>
+      <div class="form-group"><label>Size</label>
+        <div class="size-control"><input type="range" id="qr-size" min="128" max="600" value="256" oninput="document.getElementById('qr-size-val').textContent=this.value+'px'"><span class="size-val" id="qr-size-val">256px</span></div>
+      </div>
+      <div class="form-group"><label>Error Correction</label>
+        <select id="qr-ec">
+          <option value="L">Low (7%) — smallest file</option>
+          <option value="M" selected>Medium (15%) — recommended</option>
+          <option value="Q">Quartile (25%) — better recovery</option>
+          <option value="H">High (30%) — best for logos</option>
+        </select>
+      </div>
+
+      <!-- ADVANCED -->
+      <button class="advanced-toggle" onclick="toggleAdv('qr-adv',this)">◈ Advanced Options <span class="adv-icon">▶</span></button>
+      <div class="advanced-panel" id="qr-adv">
+        <div class="form-group"><label>Quiet Zone / Margin</label>
+          <div class="margin-btns">
+            <button class="margin-btn sel" onclick="setMargin(this,0)">None</button>
+            <button class="margin-btn" onclick="setMargin(this,1)">Small</button>
+            <button class="margin-btn" onclick="setMargin(this,2)">Medium</button>
+            <button class="margin-btn" onclick="setMargin(this,4)">Large</button>
+          </div>
+        </div>
+        <div class="form-group"><label>Embed Logo (use High EC)</label>
+          <div class="logo-upload-mini">
+            <div class="logo-preview" id="logo-preview">＋</div>
+            <label class="logo-upload-btn">Upload Image<input type="file" id="logo-file" accept="image/*" onchange="handleLogo(this)"></label>
+            <button class="action-btn" onclick="clearLogo()">✕</button>
+          </div>
+        </div>
+      </div>
+
       <button class="generate-btn" onclick="generateQR()">⬡ Generate QR Code</button>
     </div>
     <div class="gen-right">
-      <div class="output-area" id="qr-output-area">
-        <div class="output-placeholder" id="qr-placeholder">
-          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-            <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/>
-            <rect x="19" y="14" width="2" height="2"/><rect x="14" y="19" width="2" height="2"/>
-            <rect x="19" y="19" width="2" height="2"/>
-          </svg>
+      <div class="output-area">
+        <div class="output-placeholder" id="qr-ph">
+          <svg width="68" height="68" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width=".8"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="5" y="5" width="3" height="3"/><rect x="16" y="5" width="3" height="3"/><rect x="5" y="16" width="3" height="3"/><rect x="14" y="14" width="3" height="3"/><rect x="19" y="14" width="2" height="2"/><rect x="14" y="19" width="2" height="2"/><rect x="19" y="19" width="2" height="2"/></svg>
           <p>QR Code Preview</p>
         </div>
         <div class="loading-ring" id="qr-loading"></div>
-        <div id="qr-output"></div>
+        <div class="code-output" id="qr-output"></div>
         <div class="output-actions" id="qr-actions">
-          <button class="action-btn" onclick="downloadCode('qr')">↓ Download PNG</button>
-          <button class="action-btn" onclick="downloadSVG('qr')">↓ Download SVG</button>
+          <button class="action-btn" onclick="dlPNG('qr')">↓ PNG</button>
+          <button class="action-btn" onclick="dlSVG('qr')">↓ SVG</button>
+          <button class="action-btn" onclick="copyImg('qr')">⧉ Copy</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- BARCODE PANEL -->
-  <div class="generator-card" id="barcode-panel" style="display:none">
-    <div class="corner-deco tl"></div>
-    <div class="corner-deco tr"></div>
-    <div class="corner-deco bl"></div>
-    <div class="corner-deco br"></div>
+  <!-- ===== PDF → QR PANEL ===== -->
+  <div class="generator-card pdf-card" id="pdf-panel" style="display:none">
+    <div class="cdeco tl"></div><div class="cdeco tr"></div><div class="cdeco bl"></div><div class="cdeco br"></div>
     <div class="gen-left">
-      <div class="form-group">
-        <label>Barcode Value</label>
-        <input type="text" id="bc-text" placeholder="Enter barcode value...">
-      </div>
-      <div class="form-group">
-        <label>Format</label>
-        <select id="bc-format">
-          <option value="CODE128">CODE128 (Universal)</option>
-          <option value="CODE39">CODE39</option>
-          <option value="EAN13">EAN-13</option>
-          <option value="EAN8">EAN-8</option>
-          <option value="UPC">UPC</option>
-          <option value="ITF14">ITF-14</option>
-          <option value="MSI">MSI</option>
-          <option value="pharmacode">Pharmacode</option>
+      <div class="form-group"><label>Method</label>
+        <select id="pdf-method" onchange="updatePDFMethod()">
+          <option value="link">External Link (any PDF size) ★ Recommended</option>
+          <option value="embed">Embed PDF Data (max ~500KB)</option>
         </select>
       </div>
-      <div class="color-row">
-        <div class="color-group form-group">
-          <label>Bar Color</label>
-          <input type="color" id="bc-fg" value="#000000">
+
+      <!-- LINK METHOD (default) -->
+      <div id="pdf-link-area">
+        <div class="form-group"><label>PDF Public URL</label>
+          <input type="url" id="pdf-url" placeholder="https://drive.google.com/file/d/.../view">
         </div>
-        <div class="color-group form-group">
-          <label>Background</label>
-          <input type="color" id="bc-bg" value="#ffffff">
+        <div class="form-group"><label>Document Title (optional)</label>
+          <input type="text" id="pdf-label" placeholder="My Document Name">
         </div>
-      </div>
-      <div class="form-group">
-        <label>Width Scale</label>
-        <div class="size-control">
-          <input type="range" id="bc-width" min="1" max="4" value="2" step="0.5" oninput="document.getElementById('bc-width-val').textContent = this.value + 'x'">
-          <span class="size-value" id="bc-width-val">2x</span>
-        </div>
-      </div>
-      <div class="form-group">
-        <label>Height</label>
-        <div class="size-control">
-          <input type="range" id="bc-height" min="40" max="200" value="80" oninput="document.getElementById('bc-height-val').textContent = this.value + 'px'">
-          <span class="size-value" id="bc-height-val">80px</span>
+        <div class="pdf-link-note">
+          <strong>How to get a public PDF link:</strong><br>
+          • <strong>Google Drive:</strong> Right-click PDF → Share → Anyone with link → Copy link<br>
+          • <strong>Dropbox:</strong> Share → Copy link (change ?dl=0 to ?dl=1)<br>
+          • <strong>Any website:</strong> Right-click PDF link → Copy link address
         </div>
       </div>
-      <div class="form-group" style="display:flex;align-items:center;gap:12px">
-        <label style="margin:0">Show Text</label>
-        <input type="checkbox" id="bc-text-show" checked style="width:auto;accent-color:var(--accent)">
+
+      <!-- EMBED METHOD -->
+      <div id="pdf-embed-area" style="display:none">
+        <div class="form-group"><label>Upload PDF File</label>
+          <!-- Clickable zone -->
+          <div class="upload-zone" id="pdf-drop">
+            <input type="file" id="pdf-file" accept="application/pdf,.pdf">
+            <span class="upload-icon" id="pdf-upload-icon">📄</span>
+            <h4 id="pdf-drop-title">Click Here to Select PDF</h4>
+            <p id="pdf-drop-sub">or drag &amp; drop your file</p>
+          </div>
+          <!-- Fallback explicit button -->
+          <button type="button" class="generate-btn" id="pdf-browse-btn" onclick="document.getElementById('pdf-file').click()" style="margin-top:10px;background:rgba(255,77,109,0.15);border:1px solid var(--accentR);color:var(--accentR);font-size:.65rem;padding:12px">
+            📂 Browse Files
+          </button>
+          <div class="pdf-info" id="pdf-info">
+            <div class="pdf-info-row"><span class="pdf-info-label">Filename</span><span class="pdf-info-val" id="pdf-fname">—</span></div>
+            <div class="pdf-info-row"><span class="pdf-info-label">Size</span><span class="pdf-info-val" id="pdf-fsize">—</span></div>
+            <div class="pdf-info-row"><span class="pdf-info-label">Status</span><span class="pdf-info-val" id="pdf-fstatus">—</span></div>
+            <div class="progress-bar" id="pdf-progress"></div>
+          </div>
+          <p class="pdf-link-note" style="margin-top:10px">💡 The PDF is <strong>read locally</strong> on your device — nothing is uploaded. The QR code will encode the PDF URL/filename for reference. For actual PDF content delivery, use the <strong>Link method</strong>.</p>
+        </div>
       </div>
-      <button class="generate-btn" onclick="generateBarcode()">⬡ Generate Barcode</button>
+
+      <!-- QR SETTINGS -->
+      <div class="form-row" style="margin-top:8px">
+        <div class="form-group"><label>QR Foreground</label><input type="color" id="pdf-fg" value="#1a0033"></div>
+        <div class="form-group"><label>QR Background</label><input type="color" id="pdf-bg" value="#ffffff"></div>
+      </div>
+      <div class="form-group"><label>QR Code Size</label>
+        <div class="size-control"><input type="range" id="pdf-size" min="128" max="600" value="320" oninput="document.getElementById('pdf-size-val').textContent=this.value+'px'"><span class="size-val" style="color:var(--accentR)" id="pdf-size-val">320px</span></div>
+      </div>
+      <div class="form-group"><label>Error Correction</label>
+        <select id="pdf-ec">
+          <option value="L">Low (7%) — for URL links (recommended)</option>
+          <option value="M" selected>Medium (15%)</option>
+          <option value="Q">Quartile (25%)</option>
+          <option value="H">High (30%) — for embedded data</option>
+        </select>
+      </div>
+
+      <button class="generate-btn pdf-btn" onclick="generatePDFQR()">📄 Generate PDF QR Code</button>
     </div>
     <div class="gen-right">
-      <div class="output-area" id="bc-output-area">
-        <div class="output-placeholder" id="bc-placeholder">
-          <svg width="80" height="60" viewBox="0 0 80 60" fill="none" stroke="currentColor" stroke-width="1.5">
-            <rect x="4" y="4" width="6" height="52"/><rect x="14" y="4" width="3" height="52"/>
-            <rect x="20" y="4" width="8" height="52"/><rect x="32" y="4" width="2" height="52"/>
-            <rect x="38" y="4" width="5" height="52"/><rect x="47" y="4" width="9" height="52"/>
-            <rect x="60" y="4" width="3" height="52"/><rect x="67" y="4" width="6" height="52"/>
-          </svg>
+      <div class="output-area">
+        <div class="output-placeholder" id="pdf-ph">
+          <svg width="60" height="76" viewBox="0 0 60 76" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="44" height="68" rx="3"/><line x1="13" y1="22" x2="39" y2="22"/><line x1="13" y1="32" x2="39" y2="32"/><line x1="13" y1="42" x2="30" y2="42"/><rect x="28" y="1" width="16" height="16" rx="2"/><line x1="34" y1="4" x2="40" y2="10"/><line x1="40" y1="4" x2="34" y2="10"/></svg>
+          <p>PDF → QR Preview</p>
+        </div>
+        <div class="loading-ring pdf-ring" id="pdf-loading"></div>
+        <div class="code-output pdf-code-output" id="pdf-output"></div>
+        <div class="output-actions" id="pdf-actions">
+          <button class="action-btn" onclick="dlPNG('pdf')">↓ PNG</button>
+          <button class="action-btn" onclick="dlSVG('pdf')">↓ SVG</button>
+          <button class="action-btn" onclick="copyImg('pdf')">⧉ Copy</button>
+        </div>
+        <div class="output-note" id="pdf-note"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== BARCODE PANEL ===== -->
+  <div class="generator-card bc-card" id="bc-panel" style="display:none">
+    <div class="cdeco tl"></div><div class="cdeco tr"></div><div class="cdeco bl"></div><div class="cdeco br"></div>
+    <div class="gen-left">
+      <div class="form-group"><label>Barcode Format</label>
+        <select id="bc-format" onchange="updateBCHint()">
+          <optgroup label="Universal">
+            <option value="CODE128">CODE128 — All ASCII, most versatile</option>
+            <option value="CODE39">CODE39 — Uppercase + digits + symbols</option>
+            <option value="CODE93">CODE93 — Compact alphanumeric</option>
+          </optgroup>
+          <optgroup label="Retail / Product">
+            <option value="EAN13">EAN-13 — 12 digits, global product</option>
+            <option value="EAN8">EAN-8 — 7 digits, compact product</option>
+            <option value="EAN5">EAN-5 — 5 digits supplement</option>
+            <option value="EAN2">EAN-2 — 2 digits supplement</option>
+            <option value="UPC">UPC-A — 11 digits, North America</option>
+            <option value="UPCE">UPC-E — 7 digits, compressed</option>
+          </optgroup>
+          <optgroup label="Logistics">
+            <option value="ITF14">ITF-14 — 13 digits, shipping</option>
+            <option value="MSI">MSI — Digits only, inventory</option>
+          </optgroup>
+          <optgroup label="Specialty">
+            <option value="pharmacode">Pharmacode — Pharmaceutical 1-131070</option>
+            <option value="codabar">Codabar — Library / medical</option>
+          </optgroup>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Value</label>
+        <input type="text" id="bc-text" placeholder="Enter barcode value...">
+        <div class="format-hint" id="bc-hint">Supports all ASCII characters</div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group"><label>Bar Color</label><input type="color" id="bc-fg" value="#000000"></div>
+        <div class="form-group"><label>Background</label><input type="color" id="bc-bg" value="#ffffff"></div>
+      </div>
+      <div class="form-group"><label>Bar Width Scale</label>
+        <div class="size-control"><input type="range" id="bc-width" min="1" max="5" value="2" step=".5" oninput="document.getElementById('bc-wval').textContent=this.value+'×'"><span class="size-val" id="bc-wval">2×</span></div>
+      </div>
+      <div class="form-group"><label>Bar Height</label>
+        <div class="size-control"><input type="range" id="bc-height" min="30" max="250" value="80" oninput="document.getElementById('bc-hval').textContent=this.value+'px'"><span class="size-val" id="bc-hval">80px</span></div>
+      </div>
+
+      <!-- ADVANCED BC -->
+      <button class="advanced-toggle" onclick="toggleAdv('bc-adv',this)" style="color:var(--muted)">◈ Advanced Options <span class="adv-icon">▶</span></button>
+      <div class="advanced-panel" id="bc-adv">
+        <div class="toggle-row"><span class="toggle-label">Show Text Label</span><label class="toggle"><input type="checkbox" id="bc-showtext" checked><span class="toggle-slider"></span></label></div>
+        <div class="toggle-row"><span class="toggle-label">Bold Font</span><label class="toggle"><input type="checkbox" id="bc-bold"><span class="toggle-slider"></span></label></div>
+        <div class="form-group" style="margin-top:14px"><label>Font Size</label>
+          <div class="size-control"><input type="range" id="bc-fontsize" min="8" max="28" value="14" oninput="document.getElementById('bc-fsval').textContent=this.value+'px'"><span class="size-val" id="bc-fsval">14px</span></div>
+        </div>
+        <div class="form-group"><label>Margin</label>
+          <div class="size-control"><input type="range" id="bc-margin" min="0" max="40" value="10" oninput="document.getElementById('bc-mval').textContent=this.value+'px'"><span class="size-val" id="bc-mval">10px</span></div>
+        </div>
+        <div class="form-group"><label>Text Margin</label>
+          <div class="size-control"><input type="range" id="bc-textmargin" min="0" max="20" value="2" oninput="document.getElementById('bc-tmval').textContent=this.value+'px'"><span class="size-val" id="bc-tmval">2px</span></div>
+        </div>
+      </div>
+
+      <button class="generate-btn bc-btn" onclick="generateBarcode()">▮▮▯ Generate Barcode</button>
+    </div>
+    <div class="gen-right">
+      <div class="output-area">
+        <div class="output-placeholder" id="bc-ph">
+          <svg width="80" height="58" viewBox="0 0 80 58" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="6" height="50"/><rect x="14" y="4" width="3" height="50"/><rect x="20" y="4" width="8" height="50"/><rect x="32" y="4" width="2" height="50"/><rect x="38" y="4" width="5" height="50"/><rect x="47" y="4" width="9" height="50"/><rect x="60" y="4" width="3" height="50"/><rect x="67" y="4" width="6" height="50"/></svg>
           <p>Barcode Preview</p>
         </div>
-        <div class="loading-ring" id="bc-loading"></div>
-        <div id="barcode-output" style="display:none">
-          <svg id="barcode-svg"></svg>
-        </div>
+        <div class="loading-ring bc-ring" id="bc-loading"></div>
+        <div class="code-output bc-code-output" id="bc-output" style="display:none"><svg id="barcode-svg"></svg></div>
         <div class="output-actions" id="bc-actions">
-          <button class="action-btn" onclick="downloadCode('bc')">↓ Download PNG</button>
-          <button class="action-btn" onclick="downloadSVG('bc')">↓ Download SVG</button>
+          <button class="action-btn" onclick="dlPNG('bc')">↓ PNG</button>
+          <button class="action-btn" onclick="dlSVG('bc')">↓ SVG</button>
+          <button class="action-btn" onclick="copyImg('bc')">⧉ Copy</button>
         </div>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- HISTORY -->
+<section class="history-section" id="history">
+  <div class="section-label">Session Log</div>
+  <h2 class="section-title reveal">Generation <span style="color:var(--accent)">History</span></h2>
+  <div class="history-grid reveal" id="history-grid">
+    <div class="history-empty">No codes generated yet — get started above!</div>
   </div>
 </section>
 
 <!-- FEATURES -->
 <section class="features-section" id="features">
   <div class="section-label">Capabilities</div>
-  <h2 class="section-title reveal">Why Choose <span style="color:var(--accent)">CyberNet</span></h2>
+  <h2 class="section-title reveal">Why <span style="color:var(--accent)">CyberNet</span></h2>
   <div class="features-grid reveal">
-    <div class="feature-card">
-      <span class="feature-icon">⚡</span>
-      <h3>Instant Generation</h3>
-      <p>Generate QR codes and barcodes in real-time with sub-millisecond processing. No server roundtrips, everything happens locally in your browser.</p>
-    </div>
-    <div class="feature-card">
-      <span class="feature-icon">🎨</span>
-      <h3>Full Customization</h3>
-      <p>Control every visual aspect — colors, sizes, error correction levels. Make codes that match your brand identity perfectly.</p>
-    </div>
-    <div class="feature-card">
-      <span class="feature-icon">📐</span>
-      <h3>Vector Quality</h3>
-      <p>Export in SVG format for perfect scalability at any resolution. From business cards to billboards — always crisp and sharp.</p>
-    </div>
-    <div class="feature-card">
-      <span class="feature-icon">🔒</span>
-      <h3>100% Private</h3>
-      <p>All processing happens in your browser. Your data never leaves your device. No tracking, no storage, no compromise on privacy.</p>
-    </div>
-    <div class="feature-card">
-      <span class="feature-icon">📱</span>
-      <h3>Universal Compatibility</h3>
-      <p>Generated codes work with all standard scanners, smartphone cameras, and barcode reading applications worldwide.</p>
-    </div>
-    <div class="feature-card">
-      <span class="feature-icon">🌐</span>
-      <h3>Multiple Formats</h3>
-      <p>Support for QR Code, Code128, Code39, EAN-13, UPC-A, ITF-14, and many more industry-standard barcode formats.</p>
-    </div>
+    <div class="feature-card"><span class="feature-icon">📄</span><h3>PDF → QR Code</h3><p>Convert any PDF into a scannable QR code. Link to hosted documents or embed small PDFs directly. Perfect for menus, brochures, and manuals.</p></div>
+    <div class="feature-card"><span class="feature-icon">📡</span><h3>WiFi QR Codes</h3><p>Let guests connect instantly — generate a QR code from WiFi credentials. Works with WPA, WPA2, WEP, and open networks.</p></div>
+    <div class="feature-card"><span class="feature-icon">👤</span><h3>vCard Contacts</h3><p>Share full contact details with a single scan. Generates vCard 3.0 format with name, phone, email, organization, and website.</p></div>
+    <div class="feature-card"><span class="feature-icon">🎨</span><h3>Logo Overlay</h3><p>Embed your brand logo inside QR codes. Uses High error correction to guarantee reliable scanning even with logo coverage.</p></div>
+    <div class="feature-card"><span class="feature-icon">🔒</span><h3>100% Private</h3><p>All processing runs locally in your browser. No uploads, no tracking, no data collection. What you encode stays yours.</p></div>
+    <div class="feature-card"><span class="feature-icon">📐</span><h3>PNG + SVG Export</h3><p>Download as pixel-perfect SVG or high-resolution PNG. Works at any scale — from business cards to large format print.</p></div>
   </div>
 </section>
 
-<!-- HOW IT WORKS -->
-<section class="steps-section" id="how">
+<!-- STEPS -->
+<section class="steps-section">
   <div class="section-label">Process</div>
   <h2 class="section-title reveal">How It <span style="color:var(--accent)">Works</span></h2>
   <div class="steps reveal">
-    <div class="step">
-      <div class="step-num">01</div>
-      <h4>Select Type</h4>
-      <p>Choose between QR Code or Barcode format for your use case</p>
-    </div>
-    <div class="step">
-      <div class="step-num">02</div>
-      <h4>Enter Data</h4>
-      <p>Input your URL, text, number or any data you want to encode</p>
-    </div>
-    <div class="step">
-      <div class="step-num">03</div>
-      <h4>Customize</h4>
-      <p>Adjust colors, size, and format to match your specifications</p>
-    </div>
-    <div class="step">
-      <div class="step-num">04</div>
-      <h4>Download</h4>
-      <p>Export as high-quality PNG or vector SVG for any application</p>
-    </div>
+    <div class="step"><div class="step-num">01</div><h4>Select Mode</h4><p>Choose QR Code, PDF→QR, or Barcode for your use case</p></div>
+    <div class="step"><div class="step-num">02</div><h4>Enter Data</h4><p>Type text, upload PDF, paste URL or enter credentials</p></div>
+    <div class="step"><div class="step-num">03</div><h4>Customize</h4><p>Adjust colors, size, format, and advanced options</p></div>
+    <div class="step"><div class="step-num">04</div><h4>Download</h4><p>Export as PNG or vector SVG for print or digital use</p></div>
   </div>
 </section>
 
@@ -1194,20 +658,28 @@
 <div class="formats-section" id="formats">
   <div class="formats-inner">
     <div class="section-label">Supported</div>
-    <h2 class="section-title reveal">Code <span style="color:var(--accent)">Formats</span></h2>
+    <h2 class="section-title reveal">Supported <span style="color:var(--accent)">Formats</span></h2>
     <div class="formats-grid reveal">
+      <div class="format-chip special">PDF → QR</div>
+      <div class="format-chip special">WiFi QR</div>
+      <div class="format-chip special">vCard QR</div>
+      <div class="format-chip special">Email QR</div>
+      <div class="format-chip special">SMS QR</div>
+      <div class="format-chip special">Geo QR</div>
       <div class="format-chip">QR Code</div>
       <div class="format-chip">Code 128</div>
       <div class="format-chip">Code 39</div>
+      <div class="format-chip">Code 93</div>
       <div class="format-chip">EAN-13</div>
       <div class="format-chip">EAN-8</div>
+      <div class="format-chip">EAN-5</div>
+      <div class="format-chip">EAN-2</div>
       <div class="format-chip">UPC-A</div>
+      <div class="format-chip">UPC-E</div>
       <div class="format-chip">ITF-14</div>
-      <div class="format-chip">MSI Plessey</div>
+      <div class="format-chip">MSI</div>
       <div class="format-chip">Pharmacode</div>
       <div class="format-chip">Codabar</div>
-      <div class="format-chip">PDF417</div>
-      <div class="format-chip">Data Matrix</div>
     </div>
   </div>
 </div>
@@ -1215,188 +687,542 @@
 <!-- FOOTER -->
 <footer>
   <div class="footer-logo">CYBERNET</div>
-  <p>© 2026 CyberNet — Professional QR & Barcode Generator</p>
-  <p style="margin-top:8px;font-size:0.7rem;letter-spacing:2px;text-transform:uppercase;">Designed for the Digital Future</p>
+  <ul class="footer-links">
+    <li><a href="#generator">Generator</a></li>
+    <li><a href="#history">History</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#formats">Formats</a></li>
+  </ul>
+  <p>© 2026 CyberNet — Professional QR & Barcode Generator · 100% Client-Side · Zero Data Collection</p>
 </footer>
 
+<div class="notification" id="notif"></div>
+
 <script>
+// ==========================================
+// GLOBALS
+// ==========================================
+let genCount = 0;
+let logoURL = null;
+let pdfBase64 = null;
+let margin = 0;
+let activeTab = 'qr';
+let sessionHistory = [];
+
+// CURSOR
+document.addEventListener('mousemove', e => {
+  const g = document.getElementById('cursorGlow');
+  g.style.left = e.clientX + 'px';
+  g.style.top = e.clientY + 'px';
+});
+
 // PARTICLES
-const particles = document.getElementById('particles');
-for (let i = 0; i < 30; i++) {
+const pc = document.getElementById('particles');
+for (let i = 0; i < 36; i++) {
   const p = document.createElement('div');
-  p.classList.add('particle');
-  p.style.left = Math.random() * 100 + '%';
-  p.style.animationDuration = (10 + Math.random() * 20) + 's';
-  p.style.animationDelay = (Math.random() * 10) + 's';
-  p.style.setProperty('--drift', (Math.random() - 0.5) * 200 + 'px');
-  p.style.background = Math.random() > 0.5 ? '#00c8ff' : '#7b2fff';
-  particles.appendChild(p);
+  p.className = 'particle';
+  p.style.cssText = `left:${Math.random()*100}%;animation-duration:${12+Math.random()*22}s;animation-delay:${Math.random()*15}s`;
+  p.style.setProperty('--drift', (Math.random()-.5)*180+'px');
+  p.style.background = ['#00c8ff','#7b2fff','#00ffa3','#ff4d6d'][Math.floor(Math.random()*4)];
+  pc.appendChild(p);
 }
 
 // SCROLL REVEAL
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
-}, { threshold: 0.1 });
+const ro = new IntersectionObserver(e => e.forEach(x => { if(x.isIntersecting) x.target.classList.add('visible'); }),{threshold:.1});
+document.querySelectorAll('.reveal').forEach(el => ro.observe(el));
 
-document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
-
-// TABS
-function switchTab(type, btn) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('qr-panel').style.display = type === 'qr' ? 'grid' : 'none';
-  document.getElementById('barcode-panel').style.display = type === 'barcode' ? 'grid' : 'none';
+// NOTIFY
+function notify(msg, col='var(--accent3)') {
+  const n = document.getElementById('notif');
+  n.textContent = msg; n.style.borderColor = col; n.style.color = col;
+  n.classList.add('show');
+  setTimeout(() => n.classList.remove('show'), 3000);
 }
 
-// QR CODE GENERATION
-let qrInstance = null;
+// ==========================================
+// TABS
+// ==========================================
+function switchTab(type, btn) {
+  activeTab = type;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active','active-pdf','active-bc'));
+  btn.classList.add(type === 'qr' ? 'active' : type === 'pdf' ? 'active-pdf' : 'active-bc');
+  ['qr','pdf','bc'].forEach(t => { const p = document.getElementById(t+'-panel'); p.style.display='none'; p.classList.remove('show'); });
+  const panel = document.getElementById(type+'-panel');
+  panel.style.display = 'grid';
+  requestAnimationFrame(() => requestAnimationFrame(() => panel.classList.add('show')));
+}
 
+// ==========================================
+// QR TYPE
+// ==========================================
+function updateQRType() {
+  const type = document.getElementById('qr-type').value;
+  const allFields = ['qr-main-input','wifi-fields','vcard-fields','email-fields','sms-fields','geo-fields'];
+  allFields.forEach(id => document.getElementById(id).style.display = 'none');
+  if (['text','url','phone'].includes(type)) {
+    document.getElementById('qr-main-input').style.display = 'block';
+    document.getElementById('qr-content-label').textContent = type === 'phone' ? 'Phone Number' : type === 'url' ? 'Website URL' : 'Text Content';
+    document.getElementById('qr-text').placeholder = type === 'phone' ? '+1 234 567 8900' : type === 'url' ? 'https://example.com' : 'Enter your text...';
+  } else {
+    document.getElementById(type === 'wifi' ? 'wifi-fields' : type === 'vcard' ? 'vcard-fields' : type === 'email' ? 'email-fields' : type === 'sms' ? 'sms-fields' : 'geo-fields').style.display = 'block';
+  }
+}
+
+function buildQRData() {
+  const type = document.getElementById('qr-type').value;
+  const g = id => document.getElementById(id).value;
+  if (type === 'text') return g('qr-text');
+  if (type === 'url') return g('qr-text');
+  if (type === 'phone') return 'tel:' + g('qr-text');
+  if (type === 'wifi') {
+    return `WIFI:T:${g('wifi-sec')};S:${g('wifi-ssid')};P:${g('wifi-pass')};H:${document.getElementById('wifi-hidden').checked};;`;
+  }
+  if (type === 'vcard') {
+    return `BEGIN:VCARD\nVERSION:3.0\nFN:${g('vc-first')} ${g('vc-last')}\nN:${g('vc-last')};${g('vc-first')};;;\nORG:${g('vc-org')}\nTEL;TYPE=CELL:${g('vc-phone')}\nEMAIL:${g('vc-email')}\nURL:${g('vc-url')}\nEND:VCARD`;
+  }
+  if (type === 'email') return `mailto:${g('em-to')}?subject=${encodeURIComponent(g('em-sub'))}&body=${encodeURIComponent(g('em-body'))}`;
+  if (type === 'sms') return `sms:${g('sms-num')}?body=${encodeURIComponent(g('sms-msg'))}`;
+  if (type === 'geo') return `geo:${g('geo-lat')},${g('geo-lng')}`;
+  return g('qr-text');
+}
+
+// ==========================================
+// ADVANCED
+// ==========================================
+function toggleAdv(id, btn) {
+  const el = document.getElementById(id);
+  const open = el.classList.toggle('open');
+  btn.classList.toggle('open', open);
+}
+
+function setMargin(btn, val) {
+  document.querySelectorAll('.margin-btn').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel'); margin = val;
+}
+
+function handleLogo(input) {
+  if (!input.files[0]) return;
+  const r = new FileReader();
+  r.onload = e => {
+    logoURL = e.target.result;
+    const box = document.getElementById('logo-preview');
+    box.innerHTML = `<img src="${logoURL}">`;
+  };
+  r.readAsDataURL(input.files[0]);
+}
+
+function clearLogo() {
+  logoURL = null;
+  document.getElementById('logo-preview').innerHTML = '＋';
+  document.getElementById('logo-file').value = '';
+}
+
+// ==========================================
+// QR GENERATION
+// ==========================================
 function generateQR() {
-  const text = document.getElementById('qr-text').value.trim();
-  if (!text) { alert('Please enter content to encode.'); return; }
-
-  const size = parseInt(document.getElementById('qr-size').value);
+  const data = buildQRData();
+  if (!data.trim()) { notify('Please enter content to encode', 'var(--accentR)'); return; }
+  const size = +document.getElementById('qr-size').value;
   const fg = document.getElementById('qr-fg').value;
   const bg = document.getElementById('qr-bg').value;
   const ec = document.getElementById('qr-ec').value;
-
-  document.getElementById('qr-placeholder').style.display = 'none';
-  document.getElementById('qr-loading').style.display = 'block';
-  document.getElementById('qr-output').style.display = 'none';
-  document.getElementById('qr-actions').style.display = 'none';
-
+  showLoading('qr');
   setTimeout(() => {
-    const container = document.getElementById('qr-output');
-    container.innerHTML = '';
-
+    const cont = document.getElementById('qr-output');
+    cont.innerHTML = '';
     try {
-      qrInstance = new QRCode(container, {
-        text: text,
-        width: size,
-        height: size,
-        colorDark: fg,
-        colorLight: bg,
-        correctLevel: QRCode.CorrectLevel[ec]
-      });
-      
-      document.getElementById('qr-loading').style.display = 'none';
-      container.style.display = 'block';
-      document.getElementById('qr-actions').style.display = 'flex';
+      new QRCode(cont, {text:data, width:size, height:size, colorDark:fg, colorLight:bg, correctLevel:QRCode.CorrectLevel[ec]});
+      if (logoURL && (ec === 'H' || ec === 'Q')) {
+        setTimeout(() => {
+          const canvas = cont.querySelector('canvas');
+          if (!canvas) return;
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
+          img.onload = () => {
+            const ls = size * 0.22;
+            const x = (size-ls)/2, y = (size-ls)/2;
+            ctx.fillStyle = bg;
+            ctx.fillRect(x-4, y-4, ls+8, ls+8);
+            ctx.drawImage(img, x, y, ls, ls);
+          };
+          img.src = logoURL;
+        }, 120);
+      }
+      showOutput('qr');
+      addHistory('QR', data.substring(0,40), cont);
+      notify('QR Code generated! ✓');
     } catch(e) {
-      document.getElementById('qr-loading').style.display = 'none';
-      container.innerHTML = '<p style="color:red;font-size:0.8rem">Error generating QR code. Try shorter content.</p>';
-      container.style.display = 'block';
+      hideLoading('qr');
+      cont.innerHTML = `<p style="color:var(--accentR);font-size:.8rem;padding:20px">Error: ${e.message}</p>`;
+      cont.style.display = 'block';
     }
-  }, 600);
+  }, 480);
 }
 
-// BARCODE GENERATION
+// ==========================================
+// PDF → QR
+// ==========================================
+function updatePDFMethod() {
+  const m = document.getElementById('pdf-method').value;
+  document.getElementById('pdf-link-area').style.display = m === 'link' ? 'block' : 'none';
+  document.getElementById('pdf-embed-area').style.display = m === 'embed' ? 'block' : 'none';
+  if (m === 'embed') initPDFUpload(); // re-bind after revealing
+}
+
+// ---- PDF UPLOAD: fully rewritten and robust ----
+function handlePDFUpload(input) {
+  const file = input && input.files && input.files[0];
+  if (!file) return;
+
+  // Accept any PDF regardless of size — we only store metadata + generate QR from filename
+  const kb = (file.size / 1024).toFixed(1);
+  const mb = (file.size / (1024*1024)).toFixed(2);
+  const displaySize = file.size > 1024*1024 ? mb + ' MB' : kb + ' KB';
+
+  // Update UI immediately
+  document.getElementById('pdf-info').style.display = 'block';
+  document.getElementById('pdf-fname').textContent = file.name.length > 22 ? file.name.substring(0,20)+'…' : file.name;
+  document.getElementById('pdf-fsize').textContent = displaySize;
+  document.getElementById('pdf-fstatus').textContent = 'Reading…';
+  document.getElementById('pdf-fstatus').style.color = 'var(--accent)';
+
+  const prog = document.getElementById('pdf-progress');
+  prog.style.display = 'block';
+  prog.style.background = 'linear-gradient(90deg,var(--accentR),var(--accent2),var(--accent))';
+  prog.style.width = '0%';
+
+  // Update drop zone visuals
+  document.getElementById('pdf-upload-icon').textContent = '⏳';
+  document.getElementById('pdf-drop-title').textContent = 'Loading…';
+
+  const reader = new FileReader();
+
+  reader.onprogress = function(e) {
+    if (e.lengthComputable) {
+      prog.style.width = Math.round(e.loaded / e.total * 85) + '%';
+    }
+  };
+
+  reader.onerror = function() {
+    document.getElementById('pdf-fstatus').textContent = '✗ Read error';
+    document.getElementById('pdf-fstatus').style.color = 'var(--accentR)';
+    document.getElementById('pdf-upload-icon').textContent = '❌';
+    document.getElementById('pdf-drop-title').textContent = 'Upload Failed';
+    notify('File read error — try again', 'var(--accentR)');
+  };
+
+  reader.onload = function(e) {
+    pdfBase64 = e.target.result; // full data URL
+    prog.style.width = '100%';
+    document.getElementById('pdf-fstatus').textContent = '✓ Ready to generate QR';
+    document.getElementById('pdf-fstatus').style.color = 'var(--accent3)';
+    document.getElementById('pdf-upload-icon').textContent = '✅';
+    document.getElementById('pdf-drop-title').textContent = file.name;
+    document.getElementById('pdf-drop-title').style.color = 'var(--accent3)';
+    notify('PDF loaded — click Generate!', 'var(--accent3)');
+  };
+
+  reader.readAsDataURL(file);
+}
+
+// Wire up the file input properly (done once, after DOM ready)
+function initPDFUpload() {
+  const input = document.getElementById('pdf-file');
+  if (!input) return;
+
+  // Remove any old listeners by cloning
+  const fresh = input.cloneNode(true);
+  input.parentNode.replaceChild(fresh, input);
+
+  fresh.addEventListener('change', function() {
+    if (this.files && this.files[0]) handlePDFUpload(this);
+  });
+
+  // Drag & drop on the zone
+  const dz = document.getElementById('pdf-drop');
+  dz.addEventListener('dragenter', e => { e.preventDefault(); e.stopPropagation(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragover',  e => { e.preventDefault(); e.stopPropagation(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragleave', e => { e.preventDefault(); dz.classList.remove('drag-over'); });
+  dz.addEventListener('drop', e => {
+    e.preventDefault(); e.stopPropagation();
+    dz.classList.remove('drag-over');
+    const f = e.dataTransfer.files[0];
+    if (f && (f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'))) {
+      // Inject into the input
+      try {
+        const dt = new DataTransfer();
+        dt.items.add(f);
+        fresh.files = dt.files;
+      } catch(err) {}
+      handlePDFUpload({ files: [f] });
+    } else {
+      notify('Please drop a PDF file', 'var(--accentR)');
+    }
+  });
+}
+
+function generatePDFQR() {
+  const method = document.getElementById('pdf-method').value;
+  let content = '';
+  let noteText = '';
+
+  if (method === 'link') {
+    const url = document.getElementById('pdf-url').value.trim();
+    if (!url) { notify('Please enter a PDF URL', 'var(--accentR)'); return; }
+    // Validate it looks like a URL
+    if (!url.startsWith('http')) { notify('URL must start with http:// or https://', 'var(--accentR)'); return; }
+    content = url;
+    noteText = '✓ Scan QR → opens PDF directly in browser. Works with all scanners.';
+  } else {
+    // Embed mode: encode the filename + size as a QR reference
+    // (full base64 embed is impossible — QR max ~3KB, PDFs are always much larger)
+    if (!pdfBase64) { notify('Please select a PDF file first', 'var(--accentR)'); return; }
+    const fname = document.getElementById('pdf-fname').textContent;
+    const fsize = document.getElementById('pdf-fsize').textContent;
+    // We encode a useful reference string, not the raw PDF data
+    content = `PDF: ${fname}\nSize: ${fsize}\nGenerated by CyberNet\n${new Date().toLocaleString()}`;
+    noteText = '📄 QR encodes PDF filename/metadata. To share the actual file, use the Link method with a hosted URL.';
+  }
+
+  const size   = +document.getElementById('pdf-size').value;
+  const fg     = document.getElementById('pdf-fg').value;
+  const bg     = document.getElementById('pdf-bg').value;
+  const ec     = document.getElementById('pdf-ec').value;
+
+  showLoading('pdf');
+
+  setTimeout(() => {
+    const cont = document.getElementById('pdf-output');
+    cont.innerHTML = '';
+    try {
+      new QRCode(cont, {
+        text: content,
+        width: size, height: size,
+        colorDark: fg, colorLight: bg,
+        correctLevel: QRCode.CorrectLevel[ec]
+      });
+      showOutput('pdf');
+      const n = document.getElementById('pdf-note');
+      if (n) { n.style.display = 'block'; n.textContent = noteText; }
+      const label = method === 'link'
+        ? document.getElementById('pdf-url').value
+        : document.getElementById('pdf-fname').textContent;
+      addHistory('PDF→QR', label.substring(0,40), cont);
+      notify('PDF QR generated!', 'var(--accentR)');
+    } catch(e) {
+      hideLoading('pdf');
+      cont.innerHTML = `<p style="color:var(--accentR);font-size:.78rem;padding:20px;text-align:center">
+        Generation error: ${e.message || 'Unknown error'}<br>
+        <span style="color:var(--muted);font-size:.7rem">Try using the Link method with a shorter URL</span>
+      </p>`;
+      cont.style.display = 'block';
+    }
+  }, 500);
+}
+
+// ==========================================
+// BARCODE
+// ==========================================
+const BC_HINTS = {
+  CODE128:'All ASCII characters supported',CODE39:'Uppercase A-Z, digits 0-9, and - . $ / + % space',
+  CODE93:'Full ASCII with special encoding',EAN13:'Exactly 12 digits (check digit auto-added)',
+  EAN8:'Exactly 7 digits',EAN5:'Exactly 5 digits',EAN2:'Exactly 2 digits',
+  UPC:'Exactly 11 digits (check digit auto-added)',UPCE:'Exactly 7 digits',
+  ITF14:'Exactly 13 digits',MSI:'Digits 0-9 only',pharmacode:'Integer from 1 to 131070',
+  codabar:'Digits, letters A-D as start/stop, and - $ : / . +'
+};
+const BC_EX = {
+  CODE128:'Hello World',CODE39:'HELLO-WORLD',CODE93:'HELLO',EAN13:'590123412345',
+  EAN8:'5901234',EAN5:'12345',EAN2:'12',UPC:'04252340028',UPCE:'0123456',
+  ITF14:'0000012345678',MSI:'1234567890',pharmacode:'1234',codabar:'A12345A'
+};
+
+function updateBCHint() {
+  const fmt = document.getElementById('bc-format').value;
+  document.getElementById('bc-hint').textContent = BC_HINTS[fmt] || '';
+  document.getElementById('bc-text').placeholder = BC_EX[fmt] || 'Enter value...';
+}
+
 function generateBarcode() {
   const text = document.getElementById('bc-text').value.trim();
-  if (!text) { alert('Please enter a value to encode.'); return; }
-
-  const format = document.getElementById('bc-format').value;
-  const fg = document.getElementById('bc-fg').value;
-  const bg = document.getElementById('bc-bg').value;
-  const width = parseFloat(document.getElementById('bc-width').value);
-  const height = parseInt(document.getElementById('bc-height').value);
-  const displayValue = document.getElementById('bc-text-show').checked;
-
-  document.getElementById('bc-placeholder').style.display = 'none';
-  document.getElementById('bc-loading').style.display = 'block';
-  document.getElementById('barcode-output').style.display = 'none';
-  document.getElementById('bc-actions').style.display = 'none';
-
+  if (!text) { notify('Please enter a barcode value', 'var(--accent3)'); return; }
+  const fmt = document.getElementById('bc-format').value;
+  showLoading('bc');
   setTimeout(() => {
     try {
       JsBarcode('#barcode-svg', text, {
-        format: format,
-        lineColor: fg,
-        background: bg,
-        width: width,
-        height: height,
-        displayValue: displayValue,
-        fontOptions: 'bold',
+        format: fmt,
+        lineColor: document.getElementById('bc-fg').value,
+        background: document.getElementById('bc-bg').value,
+        width: +document.getElementById('bc-width').value,
+        height: +document.getElementById('bc-height').value,
+        displayValue: document.getElementById('bc-showtext').checked,
+        fontOptions: document.getElementById('bc-bold').checked ? 'bold' : '',
         font: 'Rajdhani',
-        textAlign: 'center',
-        textPosition: 'bottom',
-        margin: 16
+        fontSize: +document.getElementById('bc-fontsize').value,
+        textMargin: +document.getElementById('bc-textmargin').value,
+        margin: +document.getElementById('bc-margin').value,
+        textAlign: 'center', textPosition: 'bottom'
       });
-
-      document.getElementById('bc-loading').style.display = 'none';
-      document.getElementById('barcode-output').style.display = 'block';
-      document.getElementById('bc-actions').style.display = 'flex';
+      showOutputBC();
+      addHistory('Barcode', fmt+': '+text, document.getElementById('bc-output'));
+      notify('Barcode generated!', 'var(--accent3)');
     } catch(e) {
-      document.getElementById('bc-loading').style.display = 'none';
-      document.getElementById('bc-placeholder').style.display = 'flex';
-      document.getElementById('bc-placeholder').innerHTML = '<p style="color:#ff6b6b;font-size:0.8rem;letter-spacing:1px">Invalid value for this format. Please check input.</p>';
+      hideLoading('bc');
+      document.getElementById('bc-ph').style.display = 'flex';
+      document.getElementById('bc-ph').innerHTML = `<p style="color:var(--accentR);font-size:.78rem;letter-spacing:1px;text-align:center">Invalid value.<br><span style="font-size:.7rem">${BC_HINTS[fmt]||''}</span></p>`;
     }
-  }, 600);
+  }, 480);
 }
 
-// DOWNLOAD FUNCTIONS
-function downloadCode(type) {
-  if (type === 'qr') {
-    const canvas = document.querySelector('#qr-output canvas');
-    if (!canvas) return;
-    const link = document.createElement('a');
-    link.download = 'cybernet-qrcode.png';
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-  } else {
+// ==========================================
+// OUTPUT HELPERS
+// ==========================================
+function showLoading(type) {
+  document.getElementById(type+'-ph').style.display = 'none';
+  document.getElementById(type+'-loading').style.display = 'block';
+  const out = document.getElementById(type+'-output');
+  out.style.display = 'none';
+  document.getElementById(type+'-actions').style.display = 'none';
+  if (type === 'pdf') { const n = document.getElementById('pdf-note'); if(n) n.style.display = 'none'; }
+}
+
+function hideLoading(type) { document.getElementById(type+'-loading').style.display = 'none'; }
+
+function showOutput(type) {
+  hideLoading(type);
+  const out = document.getElementById(type+'-output');
+  out.style.display = 'block';
+  document.getElementById(type+'-actions').style.display = 'flex';
+  genCount++;
+  document.getElementById('genCount').textContent = 'Generated: ' + genCount;
+}
+
+function showOutputBC() {
+  hideLoading('bc');
+  document.getElementById('bc-output').style.display = 'block';
+  document.getElementById('bc-actions').style.display = 'flex';
+  genCount++;
+  document.getElementById('genCount').textContent = 'Generated: ' + genCount;
+}
+
+// ==========================================
+// HISTORY
+// ==========================================
+function addHistory(type, label, el) {
+  const item = { type, label, time: new Date().toLocaleTimeString(), el: el.cloneNode(true) };
+  sessionHistory.unshift(item);
+  if (sessionHistory.length > 10) sessionHistory.pop();
+  renderHistory();
+}
+
+function renderHistory() {
+  const grid = document.getElementById('history-grid');
+  if (!sessionHistory.length) {
+    grid.innerHTML = '<div class="history-empty">No codes generated yet</div>'; return;
+  }
+  const colors = {'QR':'var(--accent)','PDF→QR':'var(--accentR)','Barcode':'var(--accent3)'};
+  grid.innerHTML = sessionHistory.map((item,i) =>
+    `<div class="history-item" onclick="scrollToGenerator()">
+      <div class="history-thumb" id="hthumb${i}"></div>
+      <div class="history-type" style="color:${colors[item.type]||'var(--accent)'}">${item.type}</div>
+      <div class="history-text">${item.label}</div>
+      <div class="history-time">${item.time}</div>
+    </div>`
+  ).join('');
+  sessionHistory.forEach((item, i) => {
+    const box = document.getElementById('hthumb'+i);
+    const canvas = item.el.querySelector('canvas');
+    const svg = item.el.querySelector('svg');
+    if (canvas) {
+      const mini = document.createElement('canvas');
+      mini.width = 72; mini.height = 72;
+      mini.getContext('2d').drawImage(canvas, 0, 0, 72, 72);
+      box.appendChild(mini);
+    } else if (svg) {
+      const cl = svg.cloneNode(true);
+      cl.style.cssText = 'max-width:100%;max-height:72px';
+      box.appendChild(cl);
+    }
+  });
+}
+
+function scrollToGenerator() { document.getElementById('generator').scrollIntoView({behavior:'smooth'}); }
+
+// ==========================================
+// DOWNLOAD / COPY
+// ==========================================
+async function getCanvas(type) {
+  if (type === 'qr') return document.querySelector('#qr-output canvas');
+  if (type === 'pdf') return document.querySelector('#pdf-output canvas');
+  if (type === 'bc') {
     const svg = document.getElementById('barcode-svg');
-    if (!svg) return;
+    const bb = svg.getBoundingClientRect();
     const canvas = document.createElement('canvas');
-    const bbox = svg.getBoundingClientRect();
-    canvas.width = bbox.width * 2;
-    canvas.height = bbox.height * 2;
+    canvas.width = bb.width*2; canvas.height = bb.height*2;
     const ctx = canvas.getContext('2d');
     const data = new XMLSerializer().serializeToString(svg);
-    const img = new Image();
-    img.onload = () => {
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      const link = document.createElement('a');
-      link.download = 'cybernet-barcode.png';
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-    };
-    img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(data)));
+    return new Promise(res => {
+      const img = new Image();
+      img.onload = () => { ctx.drawImage(img,0,0,canvas.width,canvas.height); res(canvas); };
+      img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(data)));
+    });
   }
 }
 
-function downloadSVG(type) {
-  let svgEl;
-  if (type === 'qr') {
-    const canvas = document.querySelector('#qr-output canvas');
-    if (!canvas) return;
-    // Convert to SVG via canvas
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${canvas.width}" height="${canvas.height}">
-      <image href="${canvas.toDataURL()}" width="${canvas.width}" height="${canvas.height}"/>
-    </svg>`;
-    const blob = new Blob([svg], {type: 'image/svg+xml'});
-    const link = document.createElement('a');
-    link.download = 'cybernet-qrcode.svg';
-    link.href = URL.createObjectURL(blob);
-    link.click();
+async function dlPNG(type) {
+  const canvas = await getCanvas(type);
+  if (!canvas) { notify('Generate first!', 'var(--accentR)'); return; }
+  const a = document.createElement('a');
+  a.download = `cybernet-${type}.png`;
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+  notify('PNG Downloaded!');
+}
+
+async function dlSVG(type) {
+  if (type === 'bc') {
+    const svg = document.getElementById('barcode-svg');
+    const blob = new Blob([new XMLSerializer().serializeToString(svg)], {type:'image/svg+xml'});
+    const a = document.createElement('a');
+    a.download = 'cybernet-barcode.svg'; a.href = URL.createObjectURL(blob); a.click();
   } else {
-    svgEl = document.getElementById('barcode-svg');
-    if (!svgEl) return;
-    const data = new XMLSerializer().serializeToString(svgEl);
-    const blob = new Blob([data], {type: 'image/svg+xml'});
-    const link = document.createElement('a');
-    link.download = 'cybernet-barcode.svg';
-    link.href = URL.createObjectURL(blob);
-    link.click();
+    const canvas = await getCanvas(type);
+    if (!canvas) { notify('Generate first!', 'var(--accentR)'); return; }
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${canvas.width}" height="${canvas.height}"><image href="${canvas.toDataURL()}" width="${canvas.width}" height="${canvas.height}"/></svg>`;
+    const a = document.createElement('a');
+    a.download = `cybernet-${type}.svg`;
+    a.href = URL.createObjectURL(new Blob([svg], {type:'image/svg+xml'}));
+    a.click();
   }
+  notify('SVG Downloaded!');
 }
 
-// KEYBOARD SHORTCUTS
-document.getElementById('qr-text').addEventListener('keydown', e => {
-  if (e.ctrlKey && e.key === 'Enter') generateQR();
+async function copyImg(type) {
+  try {
+    const canvas = await getCanvas(type);
+    if (!canvas) { notify('Generate first!', 'var(--accentR)'); return; }
+    canvas.toBlob(blob => {
+      navigator.clipboard.write([new ClipboardItem({'image/png':blob})])
+        .then(() => notify('Image copied!'))
+        .catch(() => notify('Copy failed — use download', 'var(--accentR)'));
+    });
+  } catch { notify('Copy failed — use download', 'var(--accentR)'); }
+}
+
+// KEYBOARD
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey && e.key === 'Enter') {
+    if (activeTab === 'qr') generateQR();
+    else if (activeTab === 'pdf') generatePDFQR();
+    else generateBarcode();
+  }
 });
-document.getElementById('bc-text').addEventListener('keydown', e => {
-  if (e.key === 'Enter') generateBarcode();
-});
+
+// INIT
+updateBCHint();
+initPDFUpload();
 </script>
 </body>
 </html>
