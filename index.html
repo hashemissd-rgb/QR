@@ -452,91 +452,70 @@ footer p{font-size:.75rem;color:var(--muted2)}
   <div class="generator-card pdf-card" id="pdf-panel" style="display:none">
     <div class="cdeco tl"></div><div class="cdeco tr"></div><div class="cdeco bl"></div><div class="cdeco br"></div>
     <div class="gen-left">
-      <div class="form-group"><label>Method</label>
-        <select id="pdf-method" onchange="updatePDFMethod()">
-          <option value="link">External Link (any PDF size) ★ Recommended</option>
-          <option value="embed">Embed PDF Data (max ~500KB)</option>
-        </select>
+
+      <div class="form-group">
+        <label>Upload Your PDF</label>
+        <div id="pdf-drop"
+          style="border:2px dashed rgba(255,77,109,0.5);padding:60px 20px;text-align:center;cursor:pointer;transition:all .3s;background:rgba(255,77,109,0.03);position:relative"
+          onclick="document.getElementById('pdf-file').click()"
+          ondragover="event.preventDefault();this.style.background='rgba(255,77,109,0.1)'"
+          ondragleave="this.style.background='rgba(255,77,109,0.03)'"
+          ondrop="event.preventDefault();this.style.background='rgba(255,77,109,0.03)';handlePDFDrop(event)">
+          <input type="file" id="pdf-file" accept="application/pdf,.pdf" style="display:none" onchange="onPDFPicked(this)">
+          <div id="pdf-icon" style="font-size:3.5rem;margin-bottom:14px">📄</div>
+          <div id="pdf-title" style="font-family:Orbitron,monospace;font-size:.8rem;letter-spacing:2px;text-transform:uppercase;color:var(--accentR);margin-bottom:8px">Click to Upload PDF</div>
+          <div id="pdf-sub" style="font-size:.85rem;color:var(--muted)">or drag &amp; drop — any size</div>
+        </div>
+        <button type="button" onclick="document.getElementById('pdf-file').click()" style="width:100%;margin-top:8px;padding:13px;background:rgba(255,77,109,0.1);border:1px solid rgba(255,77,109,0.4);color:var(--accentR);font-family:Orbitron,monospace;font-size:.65rem;letter-spacing:2px;cursor:pointer;transition:all .3s" onmouseover="this.style.background='rgba(255,77,109,0.2)'" onmouseout="this.style.background='rgba(255,77,109,0.1)'">📂 BROWSE FILES</button>
       </div>
 
-      <!-- LINK METHOD (default) -->
-      <div id="pdf-link-area">
-        <div class="form-group"><label>PDF Public URL</label>
-          <input type="url" id="pdf-url" placeholder="https://drive.google.com/file/d/.../view">
+      <!-- Status shown after file picked -->
+      <div id="pdf-status-box" style="display:none;padding:14px;background:rgba(0,255,163,0.05);border:1px solid rgba(0,255,163,0.25);margin-bottom:18px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+          <span style="font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:Orbitron,monospace">File</span>
+          <span id="pdf-s-name" style="font-size:.78rem;color:var(--text)"></span>
         </div>
-        <div class="form-group"><label>Document Title (optional)</label>
-          <input type="text" id="pdf-label" placeholder="My Document Name">
+        <div style="display:flex;justify-content:space-between;margin-bottom:12px">
+          <span style="font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:Orbitron,monospace">Size</span>
+          <span id="pdf-s-size" style="font-family:Orbitron,monospace;font-size:.78rem;color:var(--accent3)"></span>
         </div>
-        <div class="pdf-link-note">
-          <strong>How to get a public PDF link:</strong><br>
-          • <strong>Google Drive:</strong> Right-click PDF → Share → Anyone with link → Copy link<br>
-          • <strong>Dropbox:</strong> Share → Copy link (change ?dl=0 to ?dl=1)<br>
-          • <strong>Any website:</strong> Right-click PDF link → Copy link address
+        <!-- Progress bar -->
+        <div style="height:3px;background:var(--border);margin-bottom:6px">
+          <div id="pdf-bar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--accentR),var(--accent2),var(--accent));transition:width .4s"></div>
         </div>
-      </div>
-
-      <!-- EMBED METHOD -->
-      <div id="pdf-embed-area" style="display:none">
-        <div class="form-group"><label>Upload PDF File</label>
-          <!-- Clickable zone -->
-          <div class="upload-zone" id="pdf-drop">
-            <input type="file" id="pdf-file" accept="application/pdf,.pdf">
-            <span class="upload-icon" id="pdf-upload-icon">📄</span>
-            <h4 id="pdf-drop-title">Click Here to Select PDF</h4>
-            <p id="pdf-drop-sub">or drag &amp; drop your file</p>
-          </div>
-          <!-- Fallback explicit button -->
-          <button type="button" class="generate-btn" id="pdf-browse-btn" onclick="document.getElementById('pdf-file').click()" style="margin-top:10px;background:rgba(255,77,109,0.15);border:1px solid var(--accentR);color:var(--accentR);font-size:.65rem;padding:12px">
-            📂 Browse Files
-          </button>
-          <div class="pdf-info" id="pdf-info">
-            <div class="pdf-info-row"><span class="pdf-info-label">Filename</span><span class="pdf-info-val" id="pdf-fname">—</span></div>
-            <div class="pdf-info-row"><span class="pdf-info-label">Size</span><span class="pdf-info-val" id="pdf-fsize">—</span></div>
-            <div class="pdf-info-row"><span class="pdf-info-label">Status</span><span class="pdf-info-val" id="pdf-fstatus">—</span></div>
-            <div class="progress-bar" id="pdf-progress"></div>
-          </div>
-          <p class="pdf-link-note" style="margin-top:10px">💡 The PDF is <strong>read locally</strong> on your device — nothing is uploaded. The QR code will encode the PDF URL/filename for reference. For actual PDF content delivery, use the <strong>Link method</strong>.</p>
+        <div style="display:flex;justify-content:space-between">
+          <span id="pdf-s-status" style="font-family:Orbitron,monospace;font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">Ready</span>
+          <span id="pdf-s-pct" style="font-family:Orbitron,monospace;font-size:.6rem;color:var(--accentR)"></span>
         </div>
       </div>
 
-      <!-- QR SETTINGS -->
-      <div class="form-row" style="margin-top:8px">
-        <div class="form-group"><label>QR Foreground</label><input type="color" id="pdf-fg" value="#1a0033"></div>
-        <div class="form-group"><label>QR Background</label><input type="color" id="pdf-bg" value="#ffffff"></div>
+      <!-- QR appearance -->
+      <div class="form-row">
+        <div class="form-group"><label>QR Color</label><input type="color" id="pdf-fg" value="#000000"></div>
+        <div class="form-group"><label>Background</label><input type="color" id="pdf-bg" value="#ffffff"></div>
       </div>
-      <div class="form-group"><label>QR Code Size</label>
-        <div class="size-control"><input type="range" id="pdf-size" min="128" max="600" value="320" oninput="document.getElementById('pdf-size-val').textContent=this.value+'px'"><span class="size-val" style="color:var(--accentR)" id="pdf-size-val">320px</span></div>
-      </div>
-      <div class="form-group"><label>Error Correction</label>
-        <select id="pdf-ec">
-          <option value="L">Low (7%) — for URL links (recommended)</option>
-          <option value="M" selected>Medium (15%)</option>
-          <option value="Q">Quartile (25%)</option>
-          <option value="H">High (30%) — for embedded data</option>
-        </select>
+      <div class="form-group"><label>QR Size</label>
+        <div class="size-control">
+          <input type="range" id="pdf-size" min="200" max="600" value="300" oninput="document.getElementById('pdf-size-val').textContent=this.value+'px'">
+          <span class="size-val" style="color:var(--accentR)" id="pdf-size-val">300px</span>
+        </div>
       </div>
 
-      <button class="generate-btn pdf-btn" onclick="generatePDFQR()">📄 Generate PDF QR Code</button>
+      <button class="generate-btn pdf-btn" id="pdf-main-btn" onclick="uploadAndMakeQR()">📄 Upload PDF &amp; Generate QR</button>
     </div>
+
     <div class="gen-right">
       <div class="output-area">
         <div class="output-placeholder" id="pdf-ph">
-          <svg width="60" height="76" viewBox="0 0 60 76" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="44" height="68" rx="3"/><line x1="13" y1="22" x2="39" y2="22"/><line x1="13" y1="32" x2="39" y2="32"/><line x1="13" y1="42" x2="30" y2="42"/><rect x="28" y="1" width="16" height="16" rx="2"/><line x1="34" y1="4" x2="40" y2="10"/><line x1="40" y1="4" x2="34" y2="10"/></svg>
+          <svg width="60" height="76" viewBox="0 0 60 76" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="4" y="4" width="44" height="68" rx="3"/>
+            <line x1="13" y1="22" x2="39" y2="22"/>
+            <line x1="13" y1="32" x2="39" y2="32"/>
+            <line x1="13" y1="42" x2="30" y2="42"/>
+          </svg>
           <p>PDF → QR Preview</p>
         </div>
-        <div class="loading-ring pdf-ring" id="pdf-loading"></div>
-        <div class="code-output pdf-code-output" id="pdf-output"></div>
-        <div class="output-actions" id="pdf-actions">
-          <button class="action-btn" onclick="dlPNG('pdf')">↓ PNG</button>
-          <button class="action-btn" onclick="dlSVG('pdf')">↓ SVG</button>
-          <button class="action-btn" onclick="copyImg('pdf')">⧉ Copy</button>
-        </div>
-        <div class="output-note" id="pdf-note"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== BARCODE PANEL ===== -->
+<!-- ===== BARCODE PANEL ===== -->
   <div class="generator-card bc-card" id="bc-panel" style="display:none">
     <div class="cdeco tl"></div><div class="cdeco tr"></div><div class="cdeco bl"></div><div class="cdeco br"></div>
     <div class="gen-left">
@@ -704,7 +683,7 @@ footer p{font-size:.75rem;color:var(--muted2)}
 // ==========================================
 let genCount = 0;
 let logoURL = null;
-let pdfBase64 = null;
+
 let margin = 0;
 let activeTab = 'qr';
 let sessionHistory = [];
@@ -863,163 +842,101 @@ function generateQR() {
 // ==========================================
 // PDF → QR
 // ==========================================
-function updatePDFMethod() {
-  const m = document.getElementById('pdf-method').value;
-  document.getElementById('pdf-link-area').style.display = m === 'link' ? 'block' : 'none';
-  document.getElementById('pdf-embed-area').style.display = m === 'embed' ? 'block' : 'none';
-  if (m === 'embed') initPDFUpload(); // re-bind after revealing
+let _pdfFile = null;
+
+function onPDFPicked(input) {
+  if (input.files && input.files[0]) _setPDF(input.files[0]);
+}
+function handlePDFDrop(e) {
+  const f = e.dataTransfer.files[0];
+  if (f) _setPDF(f);
+}
+function _setPDF(file) {
+  _pdfFile = file;
+  const sz = file.size >= 1048576
+    ? (file.size/1048576).toFixed(2)+' MB'
+    : (file.size/1024).toFixed(1)+' KB';
+  document.getElementById('pdf-icon').textContent  = '✅';
+  document.getElementById('pdf-title').textContent = file.name.length>30 ? file.name.substring(0,28)+'…' : file.name;
+  document.getElementById('pdf-title').style.color = 'var(--accent3)';
+  document.getElementById('pdf-sub').textContent   = sz;
+  document.getElementById('pdf-status-box').style.display = 'block';
+  document.getElementById('pdf-s-name').textContent = file.name.length>26 ? file.name.substring(0,24)+'…' : file.name;
+  document.getElementById('pdf-s-size').textContent = sz;
+  document.getElementById('pdf-s-status').textContent = 'Ready to upload';
+  document.getElementById('pdf-s-pct').textContent = '';
+  document.getElementById('pdf-bar').style.width = '0%';
+  notify('PDF selected — click the button to generate QR', 'var(--accent3)');
 }
 
-// ---- PDF UPLOAD: fully rewritten and robust ----
-function handlePDFUpload(input) {
-  const file = input && input.files && input.files[0];
-  if (!file) return;
-
-  // Accept any PDF regardless of size — we only store metadata + generate QR from filename
-  const kb = (file.size / 1024).toFixed(1);
-  const mb = (file.size / (1024*1024)).toFixed(2);
-  const displaySize = file.size > 1024*1024 ? mb + ' MB' : kb + ' KB';
-
-  // Update UI immediately
-  document.getElementById('pdf-info').style.display = 'block';
-  document.getElementById('pdf-fname').textContent = file.name.length > 22 ? file.name.substring(0,20)+'…' : file.name;
-  document.getElementById('pdf-fsize').textContent = displaySize;
-  document.getElementById('pdf-fstatus').textContent = 'Reading…';
-  document.getElementById('pdf-fstatus').style.color = 'var(--accent)';
-
-  const prog = document.getElementById('pdf-progress');
-  prog.style.display = 'block';
-  prog.style.background = 'linear-gradient(90deg,var(--accentR),var(--accent2),var(--accent))';
-  prog.style.width = '0%';
-
-  // Update drop zone visuals
-  document.getElementById('pdf-upload-icon').textContent = '⏳';
-  document.getElementById('pdf-drop-title').textContent = 'Loading…';
-
-  const reader = new FileReader();
-
-  reader.onprogress = function(e) {
-    if (e.lengthComputable) {
-      prog.style.width = Math.round(e.loaded / e.total * 85) + '%';
-    }
-  };
-
-  reader.onerror = function() {
-    document.getElementById('pdf-fstatus').textContent = '✗ Read error';
-    document.getElementById('pdf-fstatus').style.color = 'var(--accentR)';
-    document.getElementById('pdf-upload-icon').textContent = '❌';
-    document.getElementById('pdf-drop-title').textContent = 'Upload Failed';
-    notify('File read error — try again', 'var(--accentR)');
-  };
-
-  reader.onload = function(e) {
-    pdfBase64 = e.target.result; // full data URL
-    prog.style.width = '100%';
-    document.getElementById('pdf-fstatus').textContent = '✓ Ready to generate QR';
-    document.getElementById('pdf-fstatus').style.color = 'var(--accent3)';
-    document.getElementById('pdf-upload-icon').textContent = '✅';
-    document.getElementById('pdf-drop-title').textContent = file.name;
-    document.getElementById('pdf-drop-title').style.color = 'var(--accent3)';
-    notify('PDF loaded — click Generate!', 'var(--accent3)');
-  };
-
-  reader.readAsDataURL(file);
+function _setProgress(pct, status) {
+  document.getElementById('pdf-bar').style.width = pct+'%';
+  document.getElementById('pdf-s-pct').textContent = pct ? pct+'%' : '';
+  document.getElementById('pdf-s-status').textContent = status;
 }
 
-// Wire up the file input properly (done once, after DOM ready)
-function initPDFUpload() {
-  const input = document.getElementById('pdf-file');
-  if (!input) return;
-
-  // Remove any old listeners by cloning
-  const fresh = input.cloneNode(true);
-  input.parentNode.replaceChild(fresh, input);
-
-  fresh.addEventListener('change', function() {
-    if (this.files && this.files[0]) handlePDFUpload(this);
-  });
-
-  // Drag & drop on the zone
-  const dz = document.getElementById('pdf-drop');
-  dz.addEventListener('dragenter', e => { e.preventDefault(); e.stopPropagation(); dz.classList.add('drag-over'); });
-  dz.addEventListener('dragover',  e => { e.preventDefault(); e.stopPropagation(); dz.classList.add('drag-over'); });
-  dz.addEventListener('dragleave', e => { e.preventDefault(); dz.classList.remove('drag-over'); });
-  dz.addEventListener('drop', e => {
-    e.preventDefault(); e.stopPropagation();
-    dz.classList.remove('drag-over');
-    const f = e.dataTransfer.files[0];
-    if (f && (f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'))) {
-      // Inject into the input
-      try {
-        const dt = new DataTransfer();
-        dt.items.add(f);
-        fresh.files = dt.files;
-      } catch(err) {}
-      handlePDFUpload({ files: [f] });
-    } else {
-      notify('Please drop a PDF file', 'var(--accentR)');
-    }
-  });
-}
-
-function generatePDFQR() {
-  const method = document.getElementById('pdf-method').value;
-  let content = '';
-  let noteText = '';
-
-  if (method === 'link') {
-    const url = document.getElementById('pdf-url').value.trim();
-    if (!url) { notify('Please enter a PDF URL', 'var(--accentR)'); return; }
-    // Validate it looks like a URL
-    if (!url.startsWith('http')) { notify('URL must start with http:// or https://', 'var(--accentR)'); return; }
-    content = url;
-    noteText = '✓ Scan QR → opens PDF directly in browser. Works with all scanners.';
-  } else {
-    // Embed mode: encode the filename + size as a QR reference
-    // (full base64 embed is impossible — QR max ~3KB, PDFs are always much larger)
-    if (!pdfBase64) { notify('Please select a PDF file first', 'var(--accentR)'); return; }
-    const fname = document.getElementById('pdf-fname').textContent;
-    const fsize = document.getElementById('pdf-fsize').textContent;
-    // We encode a useful reference string, not the raw PDF data
-    content = `PDF: ${fname}\nSize: ${fsize}\nGenerated by CyberNet\n${new Date().toLocaleString()}`;
-    noteText = '📄 QR encodes PDF filename/metadata. To share the actual file, use the Link method with a hosted URL.';
-  }
-
-  const size   = +document.getElementById('pdf-size').value;
-  const fg     = document.getElementById('pdf-fg').value;
-  const bg     = document.getElementById('pdf-bg').value;
-  const ec     = document.getElementById('pdf-ec').value;
-
+async function uploadAndMakeQR() {
+  if (!_pdfFile) { notify('Pick a PDF file first', 'var(--accentR)'); return; }
+  const btn = document.getElementById('pdf-main-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Uploading…';
   showLoading('pdf');
+  _setProgress(10, 'Connecting…');
+  try {
+    const fd = new FormData();
+    fd.append('file', _pdfFile);
+    _setProgress(30, 'Uploading…');
+    const res = await fetch('https://file.io/?expires=14d', { method:'POST', body:fd });
+    _setProgress(80, 'Processing…');
+    if (!res.ok) throw new Error('Server error '+res.status);
+    const json = await res.json();
+    if (!json.success || !json.link) throw new Error('No link in response');
+    _setProgress(100, 'Uploaded ✓');
+    _makeQR(json.link);
+    btn.textContent = '✓ Done';
+    btn.style.background = 'rgba(0,255,163,0.12)';
+    btn.style.border = '1px solid var(--accent3)';
+    btn.style.color = 'var(--accent3)';
+    btn.disabled = false;
+  } catch(err) {
+    hideLoading('pdf');
+    _setProgress(0, 'Upload failed');
+    btn.disabled = false;
+    btn.textContent = '↺ Retry';
+    notify('Upload failed: '+err.message, 'var(--accentR)');
+  }
+}
 
+function _makeQR(url) {
+  const size = +document.getElementById('pdf-size').value;
+  const fg   = document.getElementById('pdf-fg').value;
+  const bg   = document.getElementById('pdf-bg').value;
   setTimeout(() => {
     const cont = document.getElementById('pdf-output');
     cont.innerHTML = '';
     try {
-      new QRCode(cont, {
-        text: content,
-        width: size, height: size,
-        colorDark: fg, colorLight: bg,
-        correctLevel: QRCode.CorrectLevel[ec]
-      });
+      new QRCode(cont, { text:url, width:size, height:size, colorDark:fg, colorLight:bg, correctLevel:QRCode.CorrectLevel.L });
       showOutput('pdf');
       const n = document.getElementById('pdf-note');
-      if (n) { n.style.display = 'block'; n.textContent = noteText; }
-      const label = method === 'link'
-        ? document.getElementById('pdf-url').value
-        : document.getElementById('pdf-fname').textContent;
-      addHistory('PDF→QR', label.substring(0,40), cont);
-      notify('PDF QR generated!', 'var(--accentR)');
+      if (n) { n.style.display='block'; n.textContent='✓ Scan to open your PDF. Hosted for 14 days.'; }
+      addHistory('PDF→QR', _pdfFile ? _pdfFile.name : url, document.getElementById('pdf-output'));
+      notify('QR Code ready! 🎉', 'var(--accent3)');
     } catch(e) {
       hideLoading('pdf');
-      cont.innerHTML = `<p style="color:var(--accentR);font-size:.78rem;padding:20px;text-align:center">
-        Generation error: ${e.message || 'Unknown error'}<br>
-        <span style="color:var(--muted);font-size:.7rem">Try using the Link method with a shorter URL</span>
-      </p>`;
-      cont.style.display = 'block';
+      const c = document.getElementById('pdf-output');
+      c.innerHTML = '<div style="padding:24px;text-align:center"><p style="color:var(--accentR)">'+e.message+'</p></div>';
+      c.style.display='block';
     }
-  }, 500);
+  }, 200);
 }
+
+// stubs
+function updatePDFMethod(){}
+function handlePDFUpload(){}
+function checkURLLength(){}
+function initPDFUpload(){}
+function generateFromManualURL(){}
+function generatePDFQR(){}
 
 // ==========================================
 // BARCODE
