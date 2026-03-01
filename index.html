@@ -656,9 +656,9 @@ function notify(msg, col='var(--accent3)') {
 // ==========================================
 function switchTab(type, btn) {
   activeTab = type;
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active','active-pdf','active-bc'));
-  btn.classList.add(type === 'qr' ? 'active' : type === 'pdf' ? 'active-pdf' : 'active-bc');
-  ['qr','pdf','bc'].forEach(t => { const p = document.getElementById(t+'-panel'); p.style.display='none'; p.classList.remove('show'); });
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active','active-bc'));
+  btn.classList.add(type === 'qr' ? 'active' : 'active-bc');
+  ['qr','bc'].forEach(t => { const p = document.getElementById(t+'-panel'); if(p){ p.style.display='none'; p.classList.remove('show'); }});
   const panel = document.getElementById(type+'-panel');
   panel.style.display = 'grid';
   requestAnimationFrame(() => requestAnimationFrame(() => panel.classList.add('show')));
